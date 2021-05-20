@@ -200,6 +200,7 @@ export function WalletProvider({ children = null as any }) {
                 textAlign: "left",
                 marginBottom: 8,
               }}
+              key = {provider.name}
             >
               {provider.name}
             </Button>

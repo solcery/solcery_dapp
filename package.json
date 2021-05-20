@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@ant-design/icons": "^4.6.2",
     "@craco/craco": "^6.1.2",
     "@ledgerhq/hw-transport-webusb": "^5.51.1",
     "@project-serum/serum": "^0.13.34",
