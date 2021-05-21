@@ -21,10 +21,14 @@ export const HomeView = () => {
   const { balanceInUSD: totalBalanceInUSD } = useUserTotalBalance();
 
   const unityContext = new UnityContext({
-    loaderUrl: "unity_build/2_test_no_compression.loader.js",
-    dataUrl: "unity_build/2_test_no_compression.data",
-    frameworkUrl: "unity_build/2_test_no_compression.framework.js",
-    codeUrl: "unity_build/2_test_no_compression.wasm",
+    loaderUrl: "unity_build/1_log_to_console.loader.js",
+    dataUrl: "unity_build/1_log_to_console.data",
+    frameworkUrl: "unity_build/1_log_to_console.framework.js",
+    codeUrl: "unity_build/1_log_to_console.wasm",
+  });
+
+  unityContext.on("LogToConsole", (message) => {
+    console.log(message);
   });
 
   useEffect(() => {
