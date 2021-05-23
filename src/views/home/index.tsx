@@ -11,17 +11,17 @@ import { formatUSD } from "../../utils/utils";
 
 import Unity, { UnityContext } from "react-unity-webgl";
 
-export function home_notify() {
+export function home_notify(isWC : boolean) {
   console.log('home connected');
-  var data = {isConnected:true, someInt:36};
+  var data = {isConnected:isWC, someInt:36};
   unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/5_json.loader.js",
-  dataUrl: "unity_build/5_json.data",
-  frameworkUrl: "unity_build/5_json.framework.js",
-  codeUrl: "unity_build/5_json.wasm",
+  loaderUrl: "unity_build/6_wallet.loader.js",
+  dataUrl: "unity_build/6_wallet.data",
+  frameworkUrl: "unity_build/6_wallet.framework.js",
+  codeUrl: "unity_build/6_wallet.wasm",
 });
 
 export const HomeView = () => {

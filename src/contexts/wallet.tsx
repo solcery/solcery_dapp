@@ -123,7 +123,7 @@ export function WalletProvider({ children = null as any }) {
             message: "Wallet update",
             description: "Connected to wallet " + keyToDisplay,
           });
-          home_notify();
+          home_notify(true);
         }
       });
 
@@ -134,6 +134,7 @@ export function WalletProvider({ children = null as any }) {
           message: "Wallet update",
           description: "Disconnected from wallet",
         });
+        home_notify(false);
       });
     }
 
