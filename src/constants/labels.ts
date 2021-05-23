@@ -1,5 +1,6 @@
 export const LABELS = {
-  CONNECT_LABEL: "Connect",
+  CONNECT_LABEL: "Connect_1",
+  CONNECT_LABEL_2: "Connect_2",
   BORROWING_POWER_USED: "Borrowing Power Used",
   BORROWING_POWER_VALUE: "Borrowing Power",
   BORROWED_VALUE: "You borrowed",

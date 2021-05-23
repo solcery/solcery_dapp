@@ -10,7 +10,19 @@ import { WRAPPED_SOL_MINT } from "../../utils/ids";
 import { formatUSD } from "../../utils/utils";
 
 import Unity, { UnityContext } from "react-unity-webgl";
-// import {View} from "react-native";
+
+export function home_notify() {
+  console.log('home connected');
+  var data = {isConnected:true, someInt:36};
+  unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
+}
+
+const unityContext = new UnityContext({
+  loaderUrl: "unity_build/5_json.loader.js",
+  dataUrl: "unity_build/5_json.data",
+  frameworkUrl: "unity_build/5_json.framework.js",
+  codeUrl: "unity_build/5_json.wasm",
+});
 
 export const HomeView = () => {
   const { marketEmitter, midPriceInUSD } = useMarkets();
@@ -20,12 +32,12 @@ export const HomeView = () => {
   const SOL = useUserBalance(WRAPPED_SOL_MINT);
   const { balanceInUSD: totalBalanceInUSD } = useUserTotalBalance();
 
-  const unityContext = new UnityContext({
-    loaderUrl: "unity_build/1_log_to_console.loader.js",
-    dataUrl: "unity_build/1_log_to_console.data",
-    frameworkUrl: "unity_build/1_log_to_console.framework.js",
-    codeUrl: "unity_build/1_log_to_console.wasm",
-  });
+  // const unityContext = new UnityContext({
+  //   loaderUrl: "unity_build/1_log_to_console.loader.js",
+  //   dataUrl: "unity_build/1_log_to_console.data",
+  //   frameworkUrl: "unity_build/1_log_to_console.framework.js",
+  //   codeUrl: "unity_build/1_log_to_console.wasm",
+  // });
 
   unityContext.on("LogToConsole", (message) => {
     console.log(message);
@@ -68,8 +80,6 @@ export const HomeView = () => {
     //   </Col>
     // </Row>
 
-    // <View style = {{width: '100', height: '100%'}}>
-        <Unity style = {{width: '100%', height: '100%'}} unityContext={unityContext} />
-    // </View>
+    <Unity style = {{width: '100%', height: '100%'}} unityContext={unityContext} />
   );
 };

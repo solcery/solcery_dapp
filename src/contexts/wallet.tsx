@@ -12,6 +12,7 @@ import React, {
   useState,
 } from "react";
 import { notify } from "./../utils/notifications";
+import { home_notify } from "./../views/home/index"
 import { useConnectionConfig } from "./connection";
 import { useLocalStorageState } from "./../utils/utils";
 import { LedgerWalletAdapter } from "../wallet-adapters/ledger";
@@ -105,6 +106,7 @@ export function WalletProvider({ children = null as any }) {
       wallet.on("connect", () => {
         if (wallet.publicKey) {
           setConnected(true);
+          console.log('set connected');
           const walletPublicKey = wallet.publicKey.toBase58();
           const keyToDisplay =
             walletPublicKey.length > 20
@@ -121,11 +123,13 @@ export function WalletProvider({ children = null as any }) {
             message: "Wallet update",
             description: "Connected to wallet " + keyToDisplay,
           });
+          home_notify();
         }
       });
 
       wallet.on("disconnect", () => {
         setConnected(false);
+        console.log('set disconnected');
         notify({
           message: "Wallet update",
           description: "Disconnected from wallet",
@@ -135,6 +139,7 @@ export function WalletProvider({ children = null as any }) {
 
     return () => {
       setConnected(false);
+      console.log('set disconnected');
       if (wallet) {
         wallet.disconnect();
       }
@@ -221,6 +226,7 @@ export function useWallet() {
     publicKey: wallet?.publicKey,
     connect() {
       wallet ? wallet.connect() : select();
+      console.log('connect 1');
     },
     disconnect() {
       wallet?.disconnect();

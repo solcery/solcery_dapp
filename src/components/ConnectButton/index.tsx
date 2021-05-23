@@ -42,7 +42,7 @@ export const ConnectButton = (props: ConnectButtonProps) => {
       disabled={connected && disabled}
       overlay={menu}
     >
-      {LABELS.CONNECT_LABEL}
+      {LABELS.CONNECT_LABEL_2}
     </Dropdown.Button>
   );
 };
