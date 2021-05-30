@@ -72,7 +72,8 @@ export const ConnectButton = (props: ConnectButtonProps) => {
     return (
       <Button
         {...rest}
-        onClick={connected ? send : send}
+        // onClick={connected ? send : send}
+        onClick={connected ? onClick : connect}
         disabled={connected && disabled}
       >
         {connected ? LABELS.SEND_LABEL : LABELS.CONNECT_LABEL}
