@@ -247,9 +247,9 @@ export const ConnectButton = (props: ConnectButtonProps) => {
         //   mintAuthority: PublicKey,
         //   freezeAuthority: PublicKey | null,
         // ): TransactionInstruction;
-        создаем один аккаунт, туда бахаем все минты, которые есть
+        // создаем один аккаунт, туда бахаем все минты, которые есть
 
-        Потом просто юзаем associatedTokenAccount
+        // Потом просто юзаем associatedTokenAccount
         
         let instructions: TransactionInstruction[] = [];
         var mintAccountPublicKey = createUninitializedMint(

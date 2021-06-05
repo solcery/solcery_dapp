@@ -18,10 +18,10 @@ export function home_notify(isWC: boolean) {
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/8_menu.loader.js",
-  dataUrl: "unity_build/8_menu.data",
-  frameworkUrl: "unity_build/8_menu.framework.js",
-  codeUrl: "unity_build/8_menu.wasm",
+  loaderUrl: "unity_build/9_create_button.loader.js",
+  dataUrl: "unity_build/9_create_button.data",
+  frameworkUrl: "unity_build/9_create_button.framework.js",
+  codeUrl: "unity_build/9_create_button.wasm",
 });
 
 export const HomeView = () => {
