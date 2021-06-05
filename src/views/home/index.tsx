@@ -11,9 +11,9 @@ import { formatUSD } from "../../utils/utils";
 
 import Unity, { UnityContext } from "react-unity-webgl";
 
-export function home_notify(isWC : boolean) {
+export function home_notify(isWC: boolean) {
   console.log('home connected');
-  var data = {isConnected:isWC, someInt:36};
+  var data = { isConnected: isWC, someInt: 36 };
   unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
 }
 
@@ -34,6 +34,10 @@ export const HomeView = () => {
 
   unityContext.on("LogToConsole", (message) => {
     console.log(message);
+  });
+
+  unityContext.on("CreateCard", (card) => {
+    console.log(`Created ${card} in Unity`);
   });
 
   useEffect(() => {
@@ -73,6 +77,6 @@ export const HomeView = () => {
     //   </Col>
     // </Row>
 
-    <Unity style = {{width: '100%', height: '100%'}} unityContext={unityContext} />
+    <Unity style={{ width: '100%', height: '100%' }} unityContext={unityContext} />
   );
 };
