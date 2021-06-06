@@ -173,7 +173,7 @@ export const ConnectButton = (props: ConnectButtonProps) => {
     }
     else {
       if (wallet?.publicKey) {
-        var cardPubkey = new PublicKey("B21W7RjSaxBgCVdMWkVw9epDiZ2qywYXZpH7Lq3xjXYx");
+        var cardPubkey = new PublicKey("V68XFgnTTzUYPNhz9CPEKDUp9vmFQKeeL82AXLccxU7");
         
         var buf = Buffer.allocUnsafe(3);
         buf.writeInt8(2, 0); // instruction = cast
@@ -367,13 +367,13 @@ export const ConnectButton = (props: ConnectButtonProps) => {
         </div>
         <Button
           {...rest}
-          onClick={connected ? send : send}
-          //onClick={connected ? onClick : connect}
+          //onClick={connected ? send : send}
+          onClick={connected ? onClick : connect}
           disabled={connected && disabled}
         >
           {connected ? LABELS.SEND_LABEL : LABELS.CONNECT_LABEL}
         </Button>
-
+{/*
         <Button
           {...rest}
           onClick={connected ? createCard : createCard}
@@ -408,7 +408,7 @@ export const ConnectButton = (props: ConnectButtonProps) => {
           disabled={connected && disabled}
         >
           {LABELS.GIVE_SOL}
-        </Button>
+        </Button>*/}
       </Row>
     );
   }

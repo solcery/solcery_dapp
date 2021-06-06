@@ -23,7 +23,15 @@ export function home_notify(isWC: boolean) {
   unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
 }
 
-
+const joinedBufferToBuffer = function(joinedBuffer: string) {
+  var strBytesArray = joinedBuffer.split('|');
+  var buf = Buffer.allocUnsafe(strBytesArray.length + 1);
+  buf.writeInt8(0);
+  for (var i = 0; i < strBytesArray.length; i++) {
+    buf.writeInt8(parseInt(strBytesArray[i]), i+1);
+  }
+  return buf
+}
 
 const unityContext = new UnityContext({
   loaderUrl: "unity_build/serbuild.loader.js",
@@ -33,6 +41,7 @@ const unityContext = new UnityContext({
 });
 
 export const HomeView = () => {
+
   const addCardToCookie = function(clientMetadata: Buffer, mintAccountKey: string) {
     console.log(clientMetadata);
     var picture = clientMetadata.readUInt32LE(0);
@@ -50,10 +59,10 @@ export const HomeView = () => {
     cookies.set('cards[' + cardsAmount + '][picture]', picture, { path: '/' });
     cardsAmount += 1;
     cookies.set('cardsAmount', cardsAmount, { path: '/' });
-    updateCards();
+    updateCollection();
   }
 
-  const updateCards = function () {
+  const updateCollection = function () {
     var cardsArray = [];
     const cookies = new Cookies();
     var cardsAmountCookie = cookies.get('cardsAmount');
@@ -78,25 +87,28 @@ export const HomeView = () => {
         }
       });
     }
-    console.log(JSON.stringify({
-      Cards: cardsArray
-    }))
+    unityContext.send("ReactToUnity", "UpdateCollection", JSON.stringify({ Cards: cardsArray }));
   }
 
-  const deserializeCard = function (joinedBuffer: string) {
-
-  }
-
-  const joinedBufferToBuffer = function(joinedBuffer: string) {
-    var strBytesArray = joinedBuffer.split('|');
-    var buf = Buffer.allocUnsafe(strBytesArray.length + 1);
-    buf.writeInt8(0);
-    for (var i = 0; i < strBytesArray.length; i++) {
-      buf.writeInt8(parseInt(strBytesArray[i]), i+1);
+  const updateFight = async () => {
+    var cookies = new Cookies();
+    var fightAccountKey = cookies.get('fightAccountKey');
+    if (fightAccountKey) {
+      var accInfo = await connection.getAccountInfo(new PublicKey(fightAccountKey));
+      if (accInfo) {
+        if (accInfo.data) {
+          var buf = Buffer.from(accInfo.data)
+          console.log(buf)
+          var numberOfUnits = buf.readUInt32LE(0)
+          let units = []
+          var unit1Hp = buf.readUInt32LE(8)
+          var unit2Hp = buf.readUInt32LE(16)
+          const cookies = new Cookies();
+          unityContext.send("ReactToUnity", "UpdateFight", JSON.stringify({}));
+        }
+      }
     }
-    return buf
   }
-
 
 
   var connection = useConnection();
@@ -113,21 +125,62 @@ export const HomeView = () => {
   var programId = new PublicKey("5Ds6QvdZAqwVozdu2i6qzjXm8tmBttV6uHNg4YU8rB1P");
 
   unityContext.on("LogToConsole", (message) => {
-    console.log(typeof(message));
+    console.log(message);
+  });
+
+  unityContext.on("OnUnityLoaded", () => {
+    updateFight();
+    updateCollection();
+  });
+
+  unityContext.on("CreateFight", async () => {
+    if (wallet === undefined) {
+      console.log('wallet undefined')
+    }
+    else {
+      if (wallet?.publicKey) {
+        var fightAccount = new Account()
+        var accounts: Account[];
+        accounts = []
+        var createFightAccountIx = SystemProgram.createAccount({
+          programId: programId,
+          space: 20,
+          lamports: await connection.getMinimumBalanceForRentExemption(100, 'singleGossip'),
+          fromPubkey: wallet.publicKey,
+          newAccountPubkey: fightAccount.publicKey,
+        });
+        accounts.push(fightAccount);
+        var instructions = [ createFightAccountIx ];
+
+        var buf = Buffer.allocUnsafe(1);
+        buf.writeInt8(1, 0); // instruction = createCard
+        console.log('Sending buffer', buf);
+        const createFightIx = new TransactionInstruction({
+          keys: [
+            {pubkey: wallet.publicKey, isSigner: true, isWritable: false},
+            {pubkey: fightAccount.publicKey, isSigner: false, isWritable: true},
+          ],
+          programId,
+          data: buf,
+        });
+        instructions.push(createFightIx);
+        sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+          var cookies = new Cookies();
+          cookies.set('fightAccountKey', fightAccount.publicKey.toBase58());
+          updateFight();
+        });
+      }
+    }
   });
 
   unityContext.on("CreateCard", async (card) => {
     var accounts: Account[];
     accounts = [];
     var buf = joinedBufferToBuffer(card);
-
-    console.log('create card')
-
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
     else {
-      console.log('sending transaction')
       if (wallet?.publicKey) {
           
         let instructions: TransactionInstruction[] = [];
@@ -192,7 +245,6 @@ export const HomeView = () => {
         });
         instructions.push(createCardMetadataIx); // Mb we want this one to be in rust code?    
 
-        console.log('Sending buffer', buf);
         const saveMetadataIx = new TransactionInstruction({
           keys: [
             {pubkey: cardMetadataAccountPublicKey, isSigner: false, isWritable: true},
@@ -204,14 +256,48 @@ export const HomeView = () => {
         });
         instructions.push(saveMetadataIx);
 
-        sendTransaction(connection, wallet, instructions, accounts);
-
-        let cardClientMetadataSize = buf.readUInt32LE(1);
-        addCardToCookie(buf.slice(5, cardClientMetadataSize + 5), mintAccountPublicKey.toBase58());
-        
+        await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+          let cardClientMetadataSize = buf.readUInt32LE(1);
+          addCardToCookie(buf.slice(5, cardClientMetadataSize + 5), mintAccountPublicKey.toBase58());
+        });
       }
     }
+  });
 
+  unityContext.on("UseCard", (cardAccountKey) => {
+    if (wallet === undefined) {
+      console.log('wallet undefined')
+    }
+    else {
+      if (wallet?.publicKey) {
+        const cookies = new Cookies();
+        var fightAccountStringKey = cookies.get('fightAccountKey');
+        if (fightAccountStringKey) {
+          var accounts: Account[];
+          accounts = []
+          var cardPubkey = new PublicKey(cardAccountKey);
+          var fightAccountPubkey = new PublicKey(fightAccountStringKey);
+          var buf = Buffer.allocUnsafe(3);
+          buf.writeInt8(2, 0); // instruction = cast
+          buf.writeInt8(0, 1); // caster = 0
+          buf.writeInt8(0, 2); // target = 1
+          console.log('Sending buffer', buf);
+          const castIx = new TransactionInstruction({
+            keys: [
+              {pubkey: wallet.publicKey, isSigner: true, isWritable: false},
+              {pubkey: fightAccountPubkey, isSigner: false, isWritable: true},
+              {pubkey: cardPubkey, isSigner: false, isWritable: false},
+            ],
+            programId,
+            data: buf,
+          });
+          var instructions = [ castIx ];
+          sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+            updateFight();
+          });
+        }
+      }
+    }
   });
 
   useEffect(() => {
