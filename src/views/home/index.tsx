@@ -104,7 +104,7 @@ export const HomeView = () => {
           var unit1Hp = buf.readUInt32LE(8)
           var unit2Hp = buf.readUInt32LE(16)
           const cookies = new Cookies();
-          unityContext.send("ReactToUnity", "UpdateFight", JSON.stringify({}));
+          unityContext.send("ReactToUnity", "UpdateFight", JSON.stringify({ HP1: unit1Hp, HP2: unit2Hp }));
         }
       }
     }
