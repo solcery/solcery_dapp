@@ -26,7 +26,8 @@
     "react-router-dom": "^5.2.0",
     "react-scripts": "^4.0.3",
     "react-unity-webgl": "^8.3.9",
-    "typescript": "^4.2.4"
+    "typescript": "^4.2.4",
+    "universal-cookie": "^4.0.4"
   },
   "scripts": {
     "start": "craco start",

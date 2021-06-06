@@ -173,7 +173,7 @@ export const ConnectButton = (props: ConnectButtonProps) => {
     }
     else {
       if (wallet?.publicKey) {
-        var cardPubkey = new PublicKey("V68XFgnTTzUYPNhz9CPEKDUp9vmFQKeeL82AXLccxU7");
+        var cardPubkey = new PublicKey("B21W7RjSaxBgCVdMWkVw9epDiZ2qywYXZpH7Lq3xjXYx");
         
         var buf = Buffer.allocUnsafe(3);
         buf.writeInt8(2, 0); // instruction = cast
