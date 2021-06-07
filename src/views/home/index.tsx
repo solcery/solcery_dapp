@@ -119,10 +119,9 @@ export const HomeView = () => {
   const SOL = useUserBalance(WRAPPED_SOL_MINT);
   const { balanceInUSD: totalBalanceInUSD } = useUserTotalBalance();
   const { wallet, connected, connect, select, provider } = useWallet();
-
   var connection = useConnection();
-
-  var programId = new PublicKey("5Ds6QvdZAqwVozdu2i6qzjXm8tmBttV6uHNg4YU8rB1P");
+  
+  var programId = new PublicKey("7HgYEibimBzu6zacZxdZusA3uid6tBJHZkmFeTK4MnfE");
 
   unityContext.on("LogToConsole", (message) => {
     console.log(message);
@@ -164,7 +163,7 @@ export const HomeView = () => {
           data: buf,
         });
         instructions.push(createFightIx);
-        sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+        sendTransaction(connection, wallet, instructions, accounts).then(() => {
           var cookies = new Cookies();
           cookies.set('fightAccountKey', fightAccount.publicKey.toBase58());
           updateFight();
@@ -240,7 +239,7 @@ export const HomeView = () => {
           seed: 'CREATE CARD',
           newAccountPubkey: cardMetadataAccountPublicKey,
           lamports: await connection.getMinimumBalanceForRentExemption(buf.length, 'singleGossip'),
-          space: buf.length,
+          space: buf.length - 1,
           programId: programId,
         });
         instructions.push(createCardMetadataIx); // Mb we want this one to be in rust code?    
@@ -258,7 +257,7 @@ export const HomeView = () => {
 
         await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
           let cardClientMetadataSize = buf.readUInt32LE(1);
-          addCardToCookie(buf.slice(5, cardClientMetadataSize + 5), mintAccountPublicKey.toBase58());
+          addCardToCookie(buf.slice(5, cardClientMetadataSize + 5), cardMetadataAccountPublicKey.toBase58());
         });
       }
     }

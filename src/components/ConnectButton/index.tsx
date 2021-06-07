@@ -362,16 +362,12 @@ export const ConnectButton = (props: ConnectButtonProps) => {
   if (!provider || !allowWalletChange) {
     return (
       <Row>
-        <div id = "FightState">
-          { "No fight yet" }
-        </div>
         <Button
           {...rest}
-          //onClick={connected ? send : send}
           onClick={connected ? onClick : connect}
           disabled={connected && disabled}
         >
-          {connected ? LABELS.SEND_LABEL : LABELS.CONNECT_LABEL}
+          {LABELS.CONNECT_LABEL}
         </Button>
 {/*
         <Button
