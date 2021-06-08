@@ -248,9 +248,9 @@ export const HomeView = () => {
 
         const saveMetadataIx = new TransactionInstruction({
           keys: [
-            {pubkey: wallet.publicKey, isSigner: true, isWritable: false}
+            {pubkey: wallet.publicKey, isSigner: true, isWritable: false},
             {pubkey: cardMetadataAccountPublicKey, isSigner: false, isWritable: true},
-            {pubkey: mintAccountPublicKey, isSigner: false, isWritable: false},
+            {pubkey: mintAccountPublicKey, isSigner: false, isWritable: false}
                ],
           programId,
           data: buf,
