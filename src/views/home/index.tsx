@@ -130,6 +130,8 @@ export const HomeView = () => {
   unityContext.on("OnUnityLoaded", () => {
     updateFight();
     updateCollection();
+    var data = { isConnected: connected, someInt: 42 };
+    unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
   });
 
   unityContext.on("CreateFight", async () => {
@@ -246,9 +248,9 @@ export const HomeView = () => {
 
         const saveMetadataIx = new TransactionInstruction({
           keys: [
+            {pubkey: wallet.publicKey, isSigner: true, isWritable: false},
             {pubkey: cardMetadataAccountPublicKey, isSigner: false, isWritable: true},
-            {pubkey: mintAccountPublicKey, isSigner: false, isWritable: false},
-            {pubkey: wallet.publicKey, isSigner: true, isWritable: false}
+            {pubkey: mintAccountPublicKey, isSigner: false, isWritable: false}
                ],
           programId,
           data: buf,
