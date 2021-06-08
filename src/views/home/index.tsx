@@ -130,6 +130,8 @@ export const HomeView = () => {
   unityContext.on("OnUnityLoaded", () => {
     updateFight();
     updateCollection();
+    var data = { isConnected: connected, someInt: 42 };
+    unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
   });
 
   unityContext.on("CreateFight", async () => {
