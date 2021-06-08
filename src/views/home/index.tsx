@@ -121,7 +121,7 @@ export const HomeView = () => {
   const { wallet, connected, connect, select, provider } = useWallet();
   var connection = useConnection();
   
-  var programId = new PublicKey("7HgYEibimBzu6zacZxdZusA3uid6tBJHZkmFeTK4MnfE");
+  var programId = new PublicKey("5Ds6QvdZAqwVozdu2i6qzjXm8tmBttV6uHNg4YU8rB1P");
 
   unityContext.on("LogToConsole", (message) => {
     console.log(message);
@@ -230,13 +230,13 @@ export const HomeView = () => {
 
         const cardMetadataAccountPublicKey = await PublicKey.createWithSeed(
           mintAccountPublicKey, //card key
-          'CREATE CARD',
+          'SOLCERYCARD',
           programId,
         );
         var createCardMetadataIx = SystemProgram.createAccountWithSeed({
           fromPubkey: wallet.publicKey,
           basePubkey: mintAccountPublicKey,
-          seed: 'CREATE CARD',
+          seed: 'SOLCERYCARD',
           newAccountPubkey: cardMetadataAccountPublicKey,
           lamports: await connection.getMinimumBalanceForRentExemption(buf.length, 'singleGossip'),
           space: buf.length - 1,
