@@ -8,6 +8,7 @@ import { useMarkets } from "../../contexts/market";
 import { useUserBalance, useUserTotalBalance } from "../../hooks";
 import { WRAPPED_SOL_MINT } from "../../utils/ids";
 import { formatUSD } from "../../utils/utils";
+import { notify } from "../../utils/notifications";
 import { useWallet, WalletAdapter } from "../../contexts/wallet";
 import { Account, Connection, Transaction, TransactionInstruction, TransactionCtorFields, PublicKey, sendAndConfirmTransaction } from "@solana/web3.js";
 import { createUninitializedMint, createTokenAccount } from "../../actions/account"
@@ -182,6 +183,10 @@ export const HomeView = () => {
         });
         instructions.push(createFightIx);
         sendTransaction(connection, wallet, instructions, accounts).then(() => {
+          notify({
+            message: "Fight started",
+            description: "Started fight " + fightAccount.publicKey,
+          });
           var cookies = new Cookies();
           cookies.set('fightAccountKey', fightAccount.publicKey.toBase58());
           updateFight();
@@ -274,6 +279,10 @@ export const HomeView = () => {
         instructions.push(saveMetadataIx);
 
         await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+          notify({
+            message: "Card created",
+            description: "Created card " + cardMetadataAccountPublicKey.toBase58(),
+          });
           let cardClientMetadataSize = buf.readUInt32LE(1);
           addCardToCookie(buf.slice(5, cardClientMetadataSize + 5), cardMetadataAccountPublicKey.toBase58());
         });
@@ -310,6 +319,10 @@ export const HomeView = () => {
           });
           var instructions = [ castIx ];
           sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+            notify({
+              message: "Card casted",
+              description: "Started fight " + fightAccount.publicKey,
+            });
             updateFight();
           });
         }
