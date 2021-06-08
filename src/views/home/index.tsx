@@ -321,7 +321,7 @@ export const HomeView = () => {
           sendTransaction(connection, wallet, instructions, accounts).then( async () => {
             notify({
               message: "Card casted",
-              description: "Started fight " + fightAccount.publicKey,
+              description: "Casted card " + cardPubkey,
             });
             updateFight();
           });
