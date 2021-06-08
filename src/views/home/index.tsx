@@ -73,11 +73,11 @@ export const HomeView = () => {
       Metadata: {
         Picture: 18,
         Name: "Example: Rage",
-        Description: "Deals 6 damage to character with most HP. If HP are equal%2C deals 3 damage to both.",
+        Description: "Deals 6 damage to character with most HP. If HP are equal, deals 3 damage to both.",
       }
     });
     cardsArray.push({
-      MintAdress: "uAuVFPATNVBnV2U2nu7dFPcFcUhwwiggP9nzPT3DHoE",
+      MintAdress: "44XiYbKY5gnKiDT6yxYT1dBLgtAj9JqZeeViHNK18BUU",
       Metadata: {
         Picture: 22,
         Name: "Example: Restart",
@@ -89,7 +89,7 @@ export const HomeView = () => {
       Metadata: {
         Picture: 84,
         Name: "Example: Tactics",
-        Description: "If you have less than 10 HP, heals you for 5. Otherwise deals 5 damage to enemy.",
+        Description: "If you have less than 10 HP, heals you for 4. Otherwise deals 4 damage to enemy.",
       }
     });
     for (let i = 0; i < cardsAmount; i++) 
