@@ -34,10 +34,10 @@ const joinedBufferToBuffer = function(joinedBuffer: string) {
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/build.loader.js",
-  dataUrl: "unity_build/build.data",
-  frameworkUrl: "unity_build/build.framework.js",
-  codeUrl: "unity_build/build.wasm",
+  loaderUrl: "unity_build/1_test.loader.js",
+  dataUrl: "unity_build/1_test.data",
+  frameworkUrl: "unity_build/1_test.framework.js",
+  codeUrl: "unity_build/1_test.wasm",
 });
 
 export const HomeView = () => {
