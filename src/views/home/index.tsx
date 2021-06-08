@@ -68,16 +68,32 @@ export const HomeView = () => {
     var cardsAmountCookie = cookies.get('cardsAmount');
     var cardsAmount = parseInt(cardsAmountCookie);
     cardsAmount = cardsAmount || 0;
+    cardsArray.push({
+      MintAdress: "6vZrVQqsBKdchYr8DJhfVmk1ySfC77YMgFei44g8e2WD",
+      Metadata: {
+        Picture: 18,
+        Name: "Example: Rage",
+        Description: "Deals 6 damage to character with most HP. If HP are equal%2C deals 3 damage to both.",
+      }
+    });
+    cardsArray.push({
+      MintAdress: "uAuVFPATNVBnV2U2nu7dFPcFcUhwwiggP9nzPT3DHoE",
+      Metadata: {
+        Picture: 22,
+        Name: "Example: Restart",
+        Description: "Sets all character's HP to 20",
+      }
+    });
+    cardsArray.push({
+      MintAdress: "3fiJLx22GApe2SAdvK3X3ZVL8dcvGppMshGmdLB15eV6",
+      Metadata: {
+        Picture: 84,
+        Name: "Example: Tactics",
+        Description: "If you have less than 10 HP, heals you for 5. Otherwise deals 5 damage to enemy.",
+      }
+    });
     for (let i = 0; i < cardsAmount; i++) 
     {
-      var cardData = {
-        MintAdress: cookies.get('cards[' + i + '][key]'),
-        Metadata: {
-          Picture: parseInt(cookies.get('cards[' + i + '][picture]')),
-          Name: cookies.get('cards[' + i + '][name]'),
-          Description: cookies.get('cards[' + i + '][description]'),
-        }
-      }
       cardsArray.push({
         MintAdress: cookies.get('cards[' + i + '][key]'),
         Metadata: {
