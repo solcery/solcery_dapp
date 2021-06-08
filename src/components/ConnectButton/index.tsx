@@ -51,8 +51,6 @@ const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID: PublicKey = new PublicKey(
   'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
 );
 
-//const PROGRAM_PATH = path.resolve(__dirname, '../../../../nftmech/projects/mech/dist/program');
-
 export const ConnectButton = (props: ConnectButtonProps) => {
   const { wallet, connected, connect, select, provider } = useWallet();
   const { onClick, children, disabled, allowWalletChange, ...rest } = props;
@@ -349,7 +347,6 @@ export const ConnectButton = (props: ConnectButtonProps) => {
       }
     }
   };
-  // only show if wallet selected or user connected
 
   const menu = (
     <Menu>
@@ -358,57 +355,6 @@ export const ConnectButton = (props: ConnectButtonProps) => {
       </Menu.Item>
     </Menu>
   );
-
-  if (!provider || !allowWalletChange) {
-    return (
-      <Row>
-        <Button
-          {...rest}
-          onClick={connected ? onClick : connect}
-          disabled={connected && disabled}
-        >
-          {LABELS.CONNECT_LABEL}
-        </Button>
-{/*
-        <Button
-          {...rest}
-          onClick={connected ? createCard : createCard}
-          //onClick={connected ? onClick : connect}
-          disabled={connected && disabled}
-        >
-          {LABELS.TRANSACTION_2_LABEL}
-        </Button>
-
-        <Button
-          {...rest}
-          onClick={connected ? createFight : createFight}
-          //onClick={connected ? onClick : connect}
-          disabled={connected && disabled}
-        >
-          {LABELS.CREATE_FIGHT}
-        </Button>
-
-        <Button
-          {...rest}
-          onClick={connected ? cast : cast}
-          //onClick={connected ? onClick : connect}
-          disabled={connected && disabled}
-        >
-          {LABELS.CAST_CARD}
-        </Button>
-
-        <Button
-          {...rest}
-          onClick={connected ? airdrop : airdrop}
-          //onClick={connected ? onClick : connect}
-          disabled={connected && disabled}
-        >
-          {LABELS.GIVE_SOL}
-        </Button>*/}
-      </Row>
-    );
-  }
-
   return (
     <Dropdown.Button
       onClick={connected ? onClick : connect}
