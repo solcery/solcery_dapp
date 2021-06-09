@@ -20,7 +20,7 @@ import Cookies from 'universal-cookie';
 
 export function home_notify(isWC: boolean) {
   console.log('home connected');
-  var data = { isConnected: isWC, someInt: 36 };
+  var data = { IsConnected: isWC };
   unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
 }
 
@@ -35,10 +35,10 @@ const joinedBufferToBuffer = function(joinedBuffer: string) {
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/6_text_validation.loader.js",
-  dataUrl: "unity_build/6_text_validation.data",
-  frameworkUrl: "unity_build/6_text_validation.framework.js",
-  codeUrl: "unity_build/6_text_validation.wasm",
+  loaderUrl: "unity_build/1_wallet_connection_rework.loader.js",
+  dataUrl: "unity_build/1_wallet_connection_rework.data",
+  frameworkUrl: "unity_build/1_wallet_connection_rework.framework.js",
+  codeUrl: "unity_build/1_wallet_connection_rework.wasm",
 });
 
 export const HomeView = () => {
@@ -147,7 +147,7 @@ export const HomeView = () => {
   unityContext.on("OnUnityLoaded", () => {
     updateFight();
     updateCollection();
-    var data = { isConnected: connected, someInt: 42 };
+    var data = { IsConnected: connected };
     unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
   });
 
