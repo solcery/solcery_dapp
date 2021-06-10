@@ -14,7 +14,7 @@ import { Account, Connection, Transaction, TransactionInstruction, TransactionCt
 import { createUninitializedMint, createTokenAccount } from "../../actions/account"
 import Unity, { UnityContext } from "react-unity-webgl";
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { SystemProgram, TransferParams} from "@solana/web3.js";
+import { SystemProgram, TransferParams } from "@solana/web3.js";
 import Cookies from 'universal-cookie';
 
 
@@ -24,12 +24,12 @@ export function home_notify(isWC: boolean) {
   unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
 }
 
-const joinedBufferToBuffer = function(joinedBuffer: string) {
+const joinedBufferToBuffer = function (joinedBuffer: string) {
   var strBytesArray = joinedBuffer.split('|');
   var buf = Buffer.allocUnsafe(strBytesArray.length + 1);
   buf.writeInt8(0);
   for (var i = 0; i < strBytesArray.length; i++) {
-    buf.writeInt8(parseInt(strBytesArray[i]), i+1);
+    buf.writeInt8(parseInt(strBytesArray[i]), i + 1);
   }
   return buf
 }
@@ -43,7 +43,7 @@ const unityContext = new UnityContext({
 
 export const HomeView = () => {
 
-  const addCardToCookie = function(clientMetadata: Buffer, mintAccountKey: string) {
+  const addCardToCookie = function (clientMetadata: Buffer, mintAccountKey: string) {
     console.log(clientMetadata);
     var picture = clientMetadata.readUInt32LE(0);
     var nameLength = clientMetadata.readUInt32LE(4);
@@ -93,8 +93,7 @@ export const HomeView = () => {
         Description: "If you have less than 10 HP, heals you for 4. Otherwise deals 4 damage to enemy.",
       }
     });
-    for (let i = 0; i < cardsAmount; i++) 
-    {
+    for (let i = 0; i < cardsAmount; i++) {
       cardsArray.push({
         MintAdress: cookies.get('cards[' + i + '][key]'),
         Metadata: {
@@ -137,7 +136,7 @@ export const HomeView = () => {
   const { balanceInUSD: totalBalanceInUSD } = useUserTotalBalance();
   const { wallet, connected, connect, select, provider } = useWallet();
   var connection = useConnection();
-  
+
   var programId = new PublicKey("5Ds6QvdZAqwVozdu2i6qzjXm8tmBttV6uHNg4YU8rB1P");
 
   unityContext.on("LogToConsole", (message) => {
@@ -149,6 +148,10 @@ export const HomeView = () => {
     updateCollection();
     var data = { IsConnected: connected };
     unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
+  });
+
+  unityContext.on("OpenLinkInNewTab", (link: string) => {
+    window.open(link, "_blank")
   });
 
   unityContext.on("CreateFight", async () => {
@@ -168,15 +171,15 @@ export const HomeView = () => {
           newAccountPubkey: fightAccount.publicKey,
         });
         accounts.push(fightAccount);
-        var instructions = [ createFightAccountIx ];
+        var instructions = [createFightAccountIx];
 
         var buf = Buffer.allocUnsafe(1);
         buf.writeInt8(1, 0); // instruction = createCard
         console.log('Sending buffer', buf);
         const createFightIx = new TransactionInstruction({
           keys: [
-            {pubkey: wallet.publicKey, isSigner: true, isWritable: false},
-            {pubkey: fightAccount.publicKey, isSigner: false, isWritable: true},
+            { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+            { pubkey: fightAccount.publicKey, isSigner: false, isWritable: true },
           ],
           programId,
           data: buf,
@@ -204,7 +207,7 @@ export const HomeView = () => {
     }
     else {
       if (wallet?.publicKey) {
-          
+
         let instructions: TransactionInstruction[] = [];
         var mintAccountPublicKey = createUninitializedMint(
           instructions,
@@ -223,8 +226,8 @@ export const HomeView = () => {
         instructions.push(createMintIx);
 
         let tokenAccountPublicKey = createTokenAccount(
-          instructions, 
-          wallet.publicKey, 
+          instructions,
+          wallet.publicKey,
           await connection.getMinimumBalanceForRentExemption(AccountLayout.span, 'singleGossip'),
           mintAccountPublicKey,
           wallet.publicKey,
@@ -249,7 +252,7 @@ export const HomeView = () => {
           wallet.publicKey,
           [],
         );
-        instructions.push(setMintAuthorityIx);  
+        instructions.push(setMintAuthorityIx);
 
         const cardMetadataAccountPublicKey = await PublicKey.createWithSeed(
           mintAccountPublicKey, //card key
@@ -269,16 +272,16 @@ export const HomeView = () => {
 
         const saveMetadataIx = new TransactionInstruction({
           keys: [
-            {pubkey: wallet.publicKey, isSigner: true, isWritable: false},
-            {pubkey: cardMetadataAccountPublicKey, isSigner: false, isWritable: true},
-            {pubkey: mintAccountPublicKey, isSigner: false, isWritable: false}
-               ],
+            { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+            { pubkey: cardMetadataAccountPublicKey, isSigner: false, isWritable: true },
+            { pubkey: mintAccountPublicKey, isSigner: false, isWritable: false }
+          ],
           programId,
           data: buf,
         });
         instructions.push(saveMetadataIx);
 
-        await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+        await sendTransaction(connection, wallet, instructions, accounts).then(async () => {
           notify({
             message: "Card created",
             description: "Created card " + cardMetadataAccountPublicKey.toBase58(),
@@ -310,15 +313,15 @@ export const HomeView = () => {
           console.log('Sending buffer', buf);
           const castIx = new TransactionInstruction({
             keys: [
-              {pubkey: wallet.publicKey, isSigner: true, isWritable: false},
-              {pubkey: fightAccountPubkey, isSigner: false, isWritable: true},
-              {pubkey: cardPubkey, isSigner: false, isWritable: false},
+              { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+              { pubkey: fightAccountPubkey, isSigner: false, isWritable: true },
+              { pubkey: cardPubkey, isSigner: false, isWritable: false },
             ],
             programId,
             data: buf,
           });
-          var instructions = [ castIx ];
-          sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+          var instructions = [castIx];
+          sendTransaction(connection, wallet, instructions, accounts).then(async () => {
             notify({
               message: "Card casted",
               description: "Casted card " + cardPubkey,
