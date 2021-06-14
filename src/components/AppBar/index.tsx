@@ -11,7 +11,7 @@ export const AppBar = (props: { left?: JSX.Element; right?: JSX.Element }) => {
   const { connected } = useWallet();
 
   const TopBar = (
-    <div className="App-Bar-right">
+    <div tabIndex = {1} className="App-Bar-right">
       {connected ? (
         <CurrentUserBadge />
       ) : (

@@ -35,10 +35,10 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/10_prefinal.loader.js",
-  dataUrl: "unity_build/10_prefinal.data",
-  frameworkUrl: "unity_build/10_prefinal.framework.js",
-  codeUrl: "unity_build/10_prefinal.wasm",
+  loaderUrl: "unity_build/11_prefinal_2.loader.js",
+  dataUrl: "unity_build/11_prefinal_2.data",
+  frameworkUrl: "unity_build/11_prefinal_2.framework.js",
+  codeUrl: "unity_build/11_prefinal_2.wasm",
 });
 
 export const HomeView = () => {
@@ -348,6 +348,6 @@ export const HomeView = () => {
   }, [marketEmitter, midPriceInUSD, tokenMap]);
 
   return (
-    <Unity style={{ width: '100%', height: '100%' }} unityContext={unityContext} />
+    <Unity tabIndex = {3} style={{ width: '100%', height: '100%' }} unityContext={unityContext} />
   );
 };
