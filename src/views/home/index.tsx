@@ -17,7 +17,6 @@ import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-
 import { SystemProgram, TransferParams } from "@solana/web3.js";
 import Cookies from 'universal-cookie';
 
-
 export function home_notify(isWC: boolean) {
   console.log('home connected');
   var data = { IsConnected: isWC };
@@ -35,10 +34,10 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/14_release.loader.js",
-  dataUrl: "unity_build/14_release.data",
-  frameworkUrl: "unity_build/14_release.framework.js",
-  codeUrl: "unity_build/14_release.wasm",
+  loaderUrl: "unity_build/18_no_limit.loader.js",
+  dataUrl: "unity_build/18_no_limit.data",
+  frameworkUrl: "unity_build/18_no_limit.framework.js",
+  codeUrl: "unity_build/18_no_limit.wasm",
 });
 
 export const HomeView = () => {
