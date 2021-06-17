@@ -23,9 +23,14 @@ export function set_unity_wallet_connected(isConnected: boolean) {
   unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
 }
 
-export function set_unity_card_creation() {
-  var cardCreationData = ""
-  unityContext.send("ReactToUnity", "SetCardCreationStatus", JSON.stringify(cardCreationData));
+export function set_unity_card_creation_signed(isSigned: boolean) {
+  var data = { IsSigned: isSigned };
+  unityContext.send("ReactToUnity", "SetCardCreationSigned", JSON.stringify(data));
+}
+
+export function set_unity_card_creation_confirmed(isConfirmed: boolean) {
+  var data = { IsConfirmed: isConfirmed };
+  unityContext.send("ReactToUnity", "SetCardCreationConfirmed", JSON.stringify(data));
 }
 
 const joinedBufferToBuffer = function (joinedBuffer: string) {
@@ -285,22 +290,19 @@ export const HomeView = () => {
         });
         instructions.push(saveMetadataIx);
 
-        await sendTransaction(connection, wallet, instructions, accounts, true, () => {
-          notify({
-            message: "Signed in wallet",
-          });
-        }, () => {
-          notify({
-            message: "Rejected in wallet",
-          });
-        }).then(async () => {
+        await sendTransaction(connection, wallet, instructions, accounts, true,
+          () => set_unity_card_creation_signed(true),
+          () => set_unity_card_creation_signed(false)
+        ).then(async () => {
+          set_unity_card_creation_confirmed(true);
           notify({
             message: "Card created",
             description: "Created card " + cardMetadataAccountPublicKey.toBase58(),
           });
           let cardClientMetadataSize = buf.readUInt32LE(1);
           addCardToCookie(buf.slice(5, cardClientMetadataSize + 5), cardMetadataAccountPublicKey.toBase58());
-        });
+        },
+          () => set_unity_card_creation_confirmed(false));
       }
     }
   });
