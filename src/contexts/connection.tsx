@@ -235,7 +235,9 @@ export const sendTransaction = async (
   wallet: WalletAdapter,
   instructions: TransactionInstruction[],
   signers: Account[],
-  awaitConfirmation = true
+  awaitConfirmation = true,
+  onSignInWallet? : () => any,
+  onRejectInWallet? : () => any
 ) => {
   if (!wallet?.publicKey) {
     throw new Error("Wallet is not connected");
@@ -254,43 +256,50 @@ export const sendTransaction = async (
   if (signers.length > 0) {
     transaction.partialSign(...signers);
   }
-  transaction = await wallet.signTransaction(transaction);
-  const rawTransaction = transaction.serialize();
-  let options = {
-    skipPreflight: true,
-    commitment: "singleGossip",
-  };
-
-  const txid = await connection.sendRawTransaction(rawTransaction, options);
-
-  if (awaitConfirmation) {
-    const status = (
-      await connection.confirmTransaction(
-        txid,
-        options && (options.commitment as any)
-      )
-    ).value;
-
-    if (status?.err) {
-      const errors = await getErrorForTransaction(connection, txid);
-      notify({
-        message: "Transaction failed...",
-        description: (
-          <>
-            {errors.map((err) => (
-              <div>{err}</div>
-            ))}
-            <ExplorerLink address={txid} type="transaction" />
-          </>
-        ),
-        type: "error",
-      });
-
-      throw new Error(
-        `Raw transaction ${txid} failed (${JSON.stringify(status)})`
-      );
+  await wallet.signTransaction(transaction).then(async (t) => {
+    if (onSignInWallet) onSignInWallet();
+    transaction = t;
+    const rawTransaction = transaction.serialize();
+    let options = {
+      skipPreflight: true,
+      commitment: "singleGossip",
+    };
+  
+    const txid = await connection.sendRawTransaction(rawTransaction, options);
+  
+    if (awaitConfirmation) {
+      const status = (
+        await connection.confirmTransaction(
+          txid,
+          options && (options.commitment as any)
+        )
+      ).value;
+  
+      if (status?.err) {
+        const errors = await getErrorForTransaction(connection, txid);
+        notify({
+          message: "Transaction failed...",
+          description: (
+            <>
+              {errors.map((err) => (
+                <div>{err}</div>
+              ))}
+              <ExplorerLink address={txid} type="transaction" />
+            </>
+          ),
+          type: "error",
+        });
+  
+        throw new Error(
+          `Raw transaction ${txid} failed (${JSON.stringify(status)})`
+        );
+      }
     }
-  }
-
-  return txid;
+  
+    return txid;
+  },
+  (error) => { 
+    if (onRejectInWallet) onRejectInWallet();
+    console.log(error);
+    return Promise.reject("rejected in wallet");});
 };

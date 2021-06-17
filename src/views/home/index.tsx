@@ -17,10 +17,15 @@ import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-
 import { SystemProgram, TransferParams } from "@solana/web3.js";
 import Cookies from 'universal-cookie';
 
-export function home_notify(isWC: boolean) {
+export function set_unity_wallet_connected(isConnected: boolean) {
   console.log('home connected');
-  var data = { IsConnected: isWC };
+  var data = { IsConnected: isConnected };
   unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
+}
+
+export function set_unity_card_creation() {
+  var cardCreationData = ""
+  unityContext.send("ReactToUnity", "SetCardCreationStatus", JSON.stringify(cardCreationData));
 }
 
 const joinedBufferToBuffer = function (joinedBuffer: string) {
@@ -280,7 +285,15 @@ export const HomeView = () => {
         });
         instructions.push(saveMetadataIx);
 
-        await sendTransaction(connection, wallet, instructions, accounts).then(async () => {
+        await sendTransaction(connection, wallet, instructions, accounts, true, () => {
+          notify({
+            message: "Signed in wallet",
+          });
+        }, () => {
+          notify({
+            message: "Rejected in wallet",
+          });
+        }).then(async () => {
           notify({
             message: "Card created",
             description: "Created card " + cardMetadataAccountPublicKey.toBase58(),
@@ -347,6 +360,6 @@ export const HomeView = () => {
   }, [marketEmitter, midPriceInUSD, tokenMap]);
 
   return (
-    <Unity tabIndex = {3} style={{ width: '100%', height: '100%' }} unityContext={unityContext} />
+    <Unity tabIndex={3} style={{ width: '100%', height: '100%' }} unityContext={unityContext} />
   );
 };
