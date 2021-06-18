@@ -23,13 +23,13 @@ export function set_unity_wallet_connected(isConnected: boolean) {
   unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
 }
 
-export function set_unity_card_creation_signed(isSigned: boolean) {
-  var data = { IsSigned: isSigned };
+export function set_unity_card_creation_signed(cardName: string, isSigned: boolean) {
+  var data = { CardName : cardName, IsSigned: isSigned };
   unityContext.send("ReactToUnity", "SetCardCreationSigned", JSON.stringify(data));
 }
 
-export function set_unity_card_creation_confirmed(isConfirmed: boolean) {
-  var data = { IsConfirmed: isConfirmed };
+export function set_unity_card_creation_confirmed(cardName: string, isConfirmed: boolean) {
+  var data = { CardName : cardName, IsConfirmed: isConfirmed };
   unityContext.send("ReactToUnity", "SetCardCreationConfirmed", JSON.stringify(data));
 }
 
@@ -44,10 +44,10 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/18_no_limit.loader.js",
-  dataUrl: "unity_build/18_no_limit.data",
-  frameworkUrl: "unity_build/18_no_limit.framework.js",
-  codeUrl: "unity_build/18_no_limit.wasm",
+  loaderUrl: "unity_build/21_card_creation_popup.loader.js",
+  dataUrl: "unity_build/21_card_creation_popup.data",
+  frameworkUrl: "unity_build/21_card_creation_popup.framework.js",
+  codeUrl: "unity_build/21_card_creation_popup.wasm",
 });
 
 export const HomeView = () => {
@@ -207,7 +207,7 @@ export const HomeView = () => {
     }
   });
 
-  unityContext.on("CreateCard", async (card) => {
+  unityContext.on("CreateCard", async (card, cardName) => {
     var accounts: Account[];
     accounts = [];
     var buf = joinedBufferToBuffer(card);
@@ -291,10 +291,10 @@ export const HomeView = () => {
         instructions.push(saveMetadataIx);
 
         await sendTransaction(connection, wallet, instructions, accounts, true,
-          () => set_unity_card_creation_signed(true),
-          () => set_unity_card_creation_signed(false)
+          () => set_unity_card_creation_signed(cardName, true),
+          () => set_unity_card_creation_signed(cardName, false)
         ).then(async () => {
-          set_unity_card_creation_confirmed(true);
+          set_unity_card_creation_confirmed(cardName, true);
           notify({
             message: "Card created",
             description: "Created card " + cardMetadataAccountPublicKey.toBase58(),
@@ -302,7 +302,7 @@ export const HomeView = () => {
           let cardClientMetadataSize = buf.readUInt32LE(1);
           addCardToCookie(buf.slice(5, cardClientMetadataSize + 5), cardMetadataAccountPublicKey.toBase58());
         },
-          () => set_unity_card_creation_confirmed(false));
+          () => set_unity_card_creation_confirmed(cardName, false));
       }
     }
   });
