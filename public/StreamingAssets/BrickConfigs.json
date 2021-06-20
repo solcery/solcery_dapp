@@ -1,0 +1,337 @@
+{
+  "ConfigsByType": {
+    "Action": [
+      {
+        "Name": "Void",
+        "Type": 0,
+        "Subtype": 0,
+        "Description": "Does nothing",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": []
+      },
+      {
+        "Name": "Set",
+        "Type": 0,
+        "Subtype": 1,
+        "Description": "Runs all containing <b>actions</b> one by one.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 0,
+            "Name": "Action #1"
+          },
+          {
+            "Type": 0,
+            "Name": "Action #2"
+          }
+        ]
+      },
+      {
+        "Name": "Conditional",
+        "Type": 0,
+        "Subtype": 2,
+        "Description": "Applies <b>positive</b> if <b>condition</b> is passed, otherwise applies <b>negative</b>.",
+        "HasField": false,
+        "FieldType": 1,
+        "FieldName": "TestField",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 1,
+            "Name": "Condition"
+          },
+          {
+            "Type": 0,
+            "Name": "Positive"
+          },
+          {
+            "Type": 0,
+            "Name": "Negative"
+          }
+        ]
+      },
+      {
+        "Name": "Take damage",
+        "Type": 0,
+        "Subtype": 3,
+        "Description": "Deals <b>amount</b> of damage to unit.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": true,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Amount"
+          }
+        ]
+      },
+      {
+        "Name": "Heal",
+        "Type": 0,
+        "Subtype": 4,
+        "Description": "Heals unit for <b>amount</b> of HP.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": true,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Amount"
+          }
+        ]
+      },
+      {
+        "Name": "Deal",
+        "Type": 0,
+        "Subtype": 5,
+        "Description": "Lalala",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": true,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Amount"
+          }
+        ]
+      }
+    ],
+    "Condition": [
+      {
+        "Name": "True",
+        "Type": 1,
+        "Subtype": 0,
+        "Description": "Returns true.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": []
+      },
+      {
+        "Name": "False",
+        "Type": 1,
+        "Subtype": 1,
+        "Description": "Returns false.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": []
+      },
+      {
+        "Name": "Or",
+        "Type": 1,
+        "Subtype": 2,
+        "Description": "Logical \"or\". Returns true if one of containing <b>conditions</b> return true, otherwise returns false.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 1,
+            "Name": "Condition #1"
+          },
+          {
+            "Type": 1,
+            "Name": "Condition #2"
+          }
+        ]
+      },
+      {
+        "Name": "And",
+        "Type": 1,
+        "Subtype": 3,
+        "Description": "Logical \"and\". Returns true if all of containing <b>conditions</b> return true, otherwise returns false.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 1,
+            "Name": "Condition #1"
+          },
+          {
+            "Type": 1,
+            "Name": "Condition #2"
+          }
+        ]
+      },
+      {
+        "Name": "Not",
+        "Type": 1,
+        "Subtype": 4,
+        "Description": "Logical \"not\". Returns the opposite on corresponding <b>condition</b> result.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 1,
+            "Name": "Condition"
+          }
+        ]
+      },
+      {
+        "Name": "Equal",
+        "Type": 1,
+        "Subtype": 5,
+        "Description": "Returns true if <b>values</b> are equal.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Value #1"
+          },
+          {
+            "Type": 2,
+            "Name": "Value #2"
+          }
+        ]
+      },
+      {
+        "Name": "Greater than",
+        "Type": 1,
+        "Subtype": 6,
+        "Description": "Returns true if <b>value#1</b> is greater than <b>value#2</b>.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Value #1"
+          },
+          {
+            "Type": 2,
+            "Name": "Value #2"
+          }
+        ]
+      },
+      {
+        "Name": "Less than",
+        "Type": 1,
+        "Subtype": 7,
+        "Description": "Returns true if <b>value#1</b> is lesser than <b>value#2</b>.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Value #1"
+          },
+          {
+            "Type": 2,
+            "Name": "Value #2"
+          }
+        ]
+      }
+    ],
+    "Value": [
+      {
+        "Name": "Constant",
+        "Type": 2,
+        "Subtype": 0,
+        "Description": "Returns given integer <b>value</b>.",
+        "HasField": true,
+        "FieldType": 0,
+        "FieldName": "Value",
+        "HasObjectSelection": false,
+        "Slots": []
+      },
+      {
+        "Name": "Conditional",
+        "Type": 2,
+        "Subtype": 1,
+        "Description": "Returns <b>positive</b> brick value if <b>condition</b> is passed, otherwise returns <b>negative</b>.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 1,
+            "Name": "Condition"
+          },
+          {
+            "Type": 2,
+            "Name": "Positive"
+          },
+          {
+            "Type": 2,
+            "Name": "Negative"
+          }
+        ]
+      },
+      {
+        "Name": "Current Health",
+        "Type": 2,
+        "Subtype": 4,
+        "Description": "Returns current HP of unit.",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": true,
+        "Slots": []
+      },
+      {
+        "Name": "Add",
+        "Type": 2,
+        "Subtype": 2,
+        "Description": "Returns sum of <b>values</b>",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Value #1"
+          },
+          {
+            "Type": 2,
+            "Name": "Value #2"
+          }
+        ]
+      },
+      {
+        "Name": "Substract",
+        "Type": 2,
+        "Subtype": 3,
+        "Description": "Returns <b>value #1</b> minus <b>value #2</b>",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Value #1"
+          },
+          {
+            "Type": 2,
+            "Name": "Value #2"
+          }
+        ]
+      }
+    ]
+  }
+}

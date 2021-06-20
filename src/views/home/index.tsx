@@ -44,10 +44,11 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/21_card_creation_popup.loader.js",
-  dataUrl: "unity_build/21_card_creation_popup.data",
-  frameworkUrl: "unity_build/21_card_creation_popup.framework.js",
-  codeUrl: "unity_build/21_card_creation_popup.wasm",
+  loaderUrl: "unity_build/25_streaming_assets_4.loader.js",
+  dataUrl: "unity_build/25_streaming_assets_4.data",
+  frameworkUrl: "unity_build/25_streaming_assets_4.framework.js",
+  codeUrl: "unity_build/25_streaming_assets_4.wasm",
+  streamingAssetsUrl: "StreamingAssets"
 });
 
 export const HomeView = () => {
