@@ -93,11 +93,13 @@ export const HomeView = () => {
     var players = buf.readUInt32LE(0)
     var playerSize = 32 + 12
     for (let i = 0; i < players; i++) {
+      var playerKey = new PublicKey(buf.subarray(4 + i * playerSize, 36 + i * playerSize));
       playersArray.push({
-        Address: new PublicKey(buf.subarray(4 + i * playerSize, 36 + i * playerSize)),
+        Address: playerKey,
         IsActive: Boolean(buf.readInt32LE(36 + (i * playerSize))), 
         Hp: buf.readInt32LE(36 + (i * playerSize) + 4),
         Coins: buf.readInt32LE(36 + (i * playerSize) + 8),
+        IsMe: playerKey == wallet?.publicKey,
       });
     }
     var cardsOffset = 4 + playerSize * players
@@ -115,6 +117,7 @@ export const HomeView = () => {
         },
       });
     }
+
     return {
       Players: players,
       Cards: cards,
