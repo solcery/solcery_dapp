@@ -53,56 +53,12 @@ const unityContext = new UnityContext({
 
 export const HomeView = () => {
 
-  const addCardToCookie = function (clientMetadata: Buffer, mintAccountKey: string) {
-    console.log(clientMetadata);
-    var picture = clientMetadata.readUInt32LE(0);
-    var nameLength = clientMetadata.readUInt32LE(4);
-    var descriptionLength = clientMetadata.readUInt32LE(4 + nameLength);
-    var name = clientMetadata.toString('utf8', 8, 8 + nameLength);
-    var description = clientMetadata.toString('utf8', 12 + nameLength, 12 + nameLength + descriptionLength);
-    const cookies = new Cookies();
-    var cardsAmountCookie = cookies.get('cardsAmount');
-    var cardsAmount = parseInt(cardsAmountCookie);
-    cardsAmount = cardsAmount || 0;
-    cookies.set('cards[' + cardsAmount + '][key]', mintAccountKey, { path: '/' });
-    cookies.set('cards[' + cardsAmount + '][name]', name, { path: '/' });
-    cookies.set('cards[' + cardsAmount + '][description]', description, { path: '/' });
-    cookies.set('cards[' + cardsAmount + '][picture]', picture, { path: '/' });
-    cardsAmount += 1;
-    cookies.set('cardsAmount', cardsAmount, { path: '/' });
-    updateCollection();
-  }
-
   const updateCollection = function () {
     var cardsArray = [];
     const cookies = new Cookies();
     var cardsAmountCookie = cookies.get('cardsAmount');
     var cardsAmount = parseInt(cardsAmountCookie);
     cardsAmount = cardsAmount || 0;
-    cardsArray.push({
-      MintAdress: "6vZrVQqsBKdchYr8DJhfVmk1ySfC77YMgFei44g8e2WD",
-      Metadata: {
-        Picture: 18,
-        Name: "Example: Rage",
-        Description: "Deals 6 damage to character with most HP. If HP are equal, deals 3 damage to both.",
-      }
-    });
-    cardsArray.push({
-      MintAdress: "44XiYbKY5gnKiDT6yxYT1dBLgtAj9JqZeeViHNK18BUU",
-      Metadata: {
-        Picture: 22,
-        Name: "Example: Restart",
-        Description: "Sets all character's HP to 20",
-      }
-    });
-    cardsArray.push({
-      MintAdress: "3fiJLx22GApe2SAdvK3X3ZVL8dcvGppMshGmdLB15eV6",
-      Metadata: {
-        Picture: 84,
-        Name: "Example: Tactics",
-        Description: "If you have less than 10 HP, heals you for 4. Otherwise deals 4 damage to enemy.",
-      }
-    });
     for (let i = 0; i < cardsAmount; i++) {
       cardsArray.push({
         MintAdress: cookies.get('cards[' + i + '][key]'),
@@ -116,108 +72,113 @@ export const HomeView = () => {
     unityContext.send("ReactToUnity", "UpdateCollection", JSON.stringify({ Cards: cardsArray }));
   }
 
-  const updateFight = async () => {
+  const updateBoard = async () => {
     var cookies = new Cookies();
-    var fightAccountKey = cookies.get('fightAccountKey');
-    if (fightAccountKey) {
-      var accInfo = await connection.getAccountInfo(new PublicKey(fightAccountKey));
+    var boardAccountKey = cookies.get('boardAccountKey');
+    if (boardAccountKey) {
+      var accInfo = await connection.getAccountInfo(new PublicKey(boardAccountKey));
       if (accInfo) {
         if (accInfo.data) {
           var buf = Buffer.from(accInfo.data)
-          console.log(buf)
-          var numberOfUnits = buf.readUInt32LE(0)
-          let units = []
-          var unit1Hp = buf.readUInt32LE(8)
-          var unit2Hp = buf.readUInt32LE(16)
-          const cookies = new Cookies();
-          unityContext.send("ReactToUnity", "UpdateFight", JSON.stringify({ HP1: unit1Hp, HP2: unit2Hp }));
+          serializeBoardData(buf);
         }
       }
     }
   }
 
+  const serializeBoardData = (buf: Buffer) => {
+    var playersArray = [];
+    var cardsArray = [];
 
-  var connection = useConnection();
-  const { marketEmitter, midPriceInUSD } = useMarkets();
-  const { tokenMap } = useConnectionConfig();
-  const SRM_ADDRESS = 'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt';
-  const SRM = useUserBalance(SRM_ADDRESS);
-  const SOL = useUserBalance(WRAPPED_SOL_MINT);
-  const { balanceInUSD: totalBalanceInUSD } = useUserTotalBalance();
-  const { wallet, connected, connect, select, provider } = useWallet();
-  var connection = useConnection();
+    var players = buf.readUInt32LE(0)
+    var playerSize = 32 + 12
+    for (let i = 0; i < players; i++) {
+      playersArray.push({
+        id: new PublicKey(buf.subarray(4 + i * playerSize, 36 + i * playerSize)),
+        attrs: [
+          buf.readInt32LE(36 + (i * playerSize)),
+          buf.readInt32LE(36 + (i * playerSize) + 4),
+          buf.readInt32LE(36 + (i * playerSize) + 8),
+        ],
+      });
+    }
+    var cardsOffset = 4 + playerSize * players
+    var cards = buf.readUInt32LE(cardsOffset)
+    var cardSize = 37
+    for (let i = 0; i < cards; i++) {
+      cardsArray.push({
+        id: buf.readInt32LE(cardsOffset + 4 + cardSize * i),
+        pubkey: new PublicKey(buf.subarray(cardsOffset + 8 + cardSize * i, cardsOffset + 8 + 32 + cardSize * i)),
+        place: buf.readUInt8(cardsOffset + 40 + cardSize * i),
+      });
+    }
+  }
 
-  var programId = new PublicKey("5Ds6QvdZAqwVozdu2i6qzjXm8tmBttV6uHNg4YU8rB1P");
-
-  unityContext.on("LogToConsole", (message) => {
-    console.log(message);
-  });
-
-  unityContext.on("OnUnityLoaded", () => {
-    updateFight();
-    updateCollection();
-    var data = { IsConnected: connected };
-    unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
-  });
-
-  unityContext.on("OpenLinkInNewTab", (link: string) => {
-    window.open(link, "_blank")
-  });
-
-  unityContext.on("CreateFight", async () => {
+  const createBoard = async() => {
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
     else {
       if (wallet?.publicKey) {
-        var fightAccount = new Account()
+        var boardAccount = new Account()
         var accounts: Account[];
         accounts = []
-        var createFightAccountIx = SystemProgram.createAccount({
+        var createBoardAccountIx = SystemProgram.createAccount({
           programId: programId,
-          space: 20,
-          lamports: await connection.getMinimumBalanceForRentExemption(100, 'singleGossip'),
+          space: 2353,
+          lamports: await connection.getMinimumBalanceForRentExemption(2353, 'singleGossip'),
           fromPubkey: wallet.publicKey,
-          newAccountPubkey: fightAccount.publicKey,
+          newAccountPubkey: boardAccount.publicKey,
         });
-        accounts.push(fightAccount);
-        var instructions = [createFightAccountIx];
-
+        accounts.push(boardAccount);
+        var instructions = [createBoardAccountIx];
         var buf = Buffer.allocUnsafe(1);
-        buf.writeInt8(1, 0); // instruction = createCard
+        buf.writeInt8(1, 0); // instruction = createBoard
         console.log('Sending buffer', buf);
-        const createFightIx = new TransactionInstruction({
+        const createBoardIx = new TransactionInstruction({
           keys: [
             { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-            { pubkey: fightAccount.publicKey, isSigner: false, isWritable: true },
+            { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
           ],
           programId,
           data: buf,
         });
-        instructions.push(createFightIx);
+        instructions.push(createBoardIx);     
+        var buf = Buffer.allocUnsafe(1);
+        buf.writeInt8(2, 0); // instruction = joinBoard
+        const joinBoardIx = new TransactionInstruction({
+          keys: [
+            { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+            { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
+          ],
+          programId,
+          data: buf,
+        });
+        instructions.push(joinBoardIx);
         sendTransaction(connection, wallet, instructions, accounts).then(() => {
           notify({
-            message: "Fight started",
-            description: "Started fight " + fightAccount.publicKey,
+            message: "Board started",
+            description: "Started board " + boardAccount.publicKey,
           });
           var cookies = new Cookies();
-          cookies.set('fightAccountKey', fightAccount.publicKey.toBase58());
-          updateFight();
+          cookies.set('boardAccountKey', boardAccount.publicKey.toBase58());
+          updateBoard();
         });
       }
     }
-  });
+  }
+  unityContext.on("CreateBoard", createBoard);
 
-  unityContext.on("CreateCard", async (card, cardName) => {
+  
+  const createCard = async(cardData: string, cardName: string) => {
     var accounts: Account[];
     accounts = [];
-    var buf = joinedBufferToBuffer(card);
+    var buf = joinedBufferToBuffer(cardData);
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
-    else {
+    else {      
       if (wallet?.publicKey) {
-
         let instructions: TransactionInstruction[] = [];
         var mintAccountPublicKey = createUninitializedMint(
           instructions,
@@ -301,12 +262,42 @@ export const HomeView = () => {
             description: "Created card " + cardMetadataAccountPublicKey.toBase58(),
           });
           let cardClientMetadataSize = buf.readUInt32LE(1);
-          addCardToCookie(buf.slice(5, cardClientMetadataSize + 5), cardMetadataAccountPublicKey.toBase58());
         },
           () => set_unity_card_creation_confirmed(cardName, false));
       }
     }
+  };
+  unityContext.on("CreateCard", createCard);
+
+
+  var connection = useConnection();
+  const { marketEmitter, midPriceInUSD } = useMarkets();
+  const { tokenMap } = useConnectionConfig();
+  const SRM_ADDRESS = 'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt';
+  const SRM = useUserBalance(SRM_ADDRESS);
+  const SOL = useUserBalance(WRAPPED_SOL_MINT);
+  const { balanceInUSD: totalBalanceInUSD } = useUserTotalBalance();
+  const { wallet, connected, connect, select, provider } = useWallet();
+  var connection = useConnection();
+
+  var programId = new PublicKey("A1U9yQfGgNMn2tkE5HB576QYoBA3uAdNFdjJA439S4m6");
+
+  unityContext.on("LogToConsole", (message) => {
+    console.log(message);
   });
+
+  unityContext.on("OnUnityLoaded", () => {
+    updateBoard();
+    updateCollection();
+    var data = { IsConnected: connected };
+    unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
+  });
+
+  unityContext.on("OpenLinkInNewTab", (link: string) => {
+    window.open(link, "_blank")
+  });
+
+
 
   unityContext.on("UseCard", (cardAccountKey) => {
     if (wallet === undefined) {
@@ -315,12 +306,12 @@ export const HomeView = () => {
     else {
       if (wallet?.publicKey) {
         const cookies = new Cookies();
-        var fightAccountStringKey = cookies.get('fightAccountKey');
-        if (fightAccountStringKey) {
+        var boardAccountStringKey = cookies.get('boardAccountKey');
+        if (boardAccountStringKey) {
           var accounts: Account[];
           accounts = []
           var cardPubkey = new PublicKey(cardAccountKey);
-          var fightAccountPubkey = new PublicKey(fightAccountStringKey);
+          var boardAccountPubkey = new PublicKey(boardAccountStringKey);
           var buf = Buffer.allocUnsafe(3);
           buf.writeInt8(2, 0); // instruction = cast
           buf.writeInt8(0, 1); // caster = 0
@@ -329,7 +320,7 @@ export const HomeView = () => {
           const castIx = new TransactionInstruction({
             keys: [
               { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-              { pubkey: fightAccountPubkey, isSigner: false, isWritable: true },
+              { pubkey: boardAccountPubkey, isSigner: false, isWritable: true },
               { pubkey: cardPubkey, isSigner: false, isWritable: false },
             ],
             programId,
@@ -341,7 +332,7 @@ export const HomeView = () => {
               message: "Card casted",
               description: "Casted card " + cardPubkey,
             });
-            updateFight();
+            updateBoard();
           });
         }
       }
@@ -364,5 +355,14 @@ export const HomeView = () => {
 
   return (
     <Unity tabIndex={3} style={{ width: '100%', height: '100%' }} unityContext={unityContext} />
+    // <Row>
+    //   <Button onClick={connected ? createBoard : createBoard} >
+    //     create board
+    //   </Button>
+
+    //   <Button onClick={connected ? createCard : createCard} >
+    //     create card
+    //   </Button>
+    // </Row>
   );
 };
