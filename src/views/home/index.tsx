@@ -80,47 +80,52 @@ export const HomeView = () => {
       if (accInfo) {
         if (accInfo.data) {
           var buf = Buffer.from(accInfo.data)
-          unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(serializeBoardData));
+          unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(serializeBoardData(buf)));
         }
       }
     }
   }
 
   const serializeBoardData = (buf: Buffer) => {
-    var playersArray = [];
-    var cardsArray = [];
+    if (wallet?.publicKey) {
+      var playersArray = [];
+      var cardsArray = [];
 
-    var players = buf.readUInt32LE(0)
-    var playerSize = 32 + 12
-    for (let i = 0; i < players; i++) {
-      var playerKey = new PublicKey(buf.subarray(4 + i * playerSize, 36 + i * playerSize));
-      playersArray.push({
-        Address: playerKey,
-        IsActive: Boolean(buf.readInt32LE(36 + (i * playerSize))), 
-        Hp: buf.readInt32LE(36 + (i * playerSize) + 4),
-        Coins: buf.readInt32LE(36 + (i * playerSize) + 8),
-        IsMe: playerKey == wallet?.publicKey,
-      });
-    }
-    var cardsOffset = 4 + playerSize * players
-    var cards = buf.readUInt32LE(cardsOffset)
-    var cardSize = 37
-    for (let i = 0; i < cards; i++) {
-      cardsArray.push({
-        CardIndex: buf.readInt32LE(cardsOffset + 4 + cardSize * i),
-        MintAddress: new PublicKey(buf.subarray(cardsOffset + 8 + cardSize * i, cardsOffset + 8 + 32 + cardSize * i)),
-        CardPlace: buf.readUInt8(cardsOffset + 40 + cardSize * i),
-        Metadata: {
-          Picture: 69,
-          Name: "Good card",
-          Description: "Descriptive description",
-        },
-      });
-    }
-
-    return {
-      Players: players,
-      Cards: cards,
+      var players = buf.readUInt32LE(0)
+      var playerSize = 32 + 12
+      for (let i = 0; i < players; i++) {
+        var playerKey = new PublicKey(buf.subarray(4 + i * playerSize, 36 + i * playerSize));
+        playersArray.push({
+          Address: playerKey.toBase58(),
+          IsActive: Boolean(buf.readInt32LE(36 + (i * playerSize))), 
+          Hp: buf.readInt32LE(36 + (i * playerSize) + 4),
+          Coins: buf.readInt32LE(36 + (i * playerSize) + 8),
+          IsMe: playerKey.toBase58() == wallet.publicKey.toBase58(),
+        })
+      }
+      var cardsOffset = 4 + playerSize * players
+      var cards = buf.readUInt32LE(cardsOffset)
+      var cardSize = 37
+      for (let i = 0; i < cards; i++) {
+        cardsArray.push({
+          CardIndex: buf.readInt32LE(cardsOffset + 4 + cardSize * i),
+          MintAddress: new PublicKey(buf.subarray(cardsOffset + 8 + cardSize * i, cardsOffset + 8 + 32 + cardSize * i)).toBase58(),
+          CardPlace: buf.readUInt8(cardsOffset + 40 + cardSize * i),
+          Metadata: {
+            Picture: 69,
+            Name: "Good card",
+            Description: "Descriptive description",
+          },
+        });
+      }
+      console.log(playersArray)
+      console.log(cardsArray)
+      console.log(playersArray[0].Address)
+      console.log(wallet.publicKey.toBase58()) 
+      return {
+        Players: playersArray,
+        Cards: cardsArray,
+      }
     }
   }
 
