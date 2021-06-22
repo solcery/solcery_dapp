@@ -80,7 +80,7 @@ export const HomeView = () => {
       if (accInfo) {
         if (accInfo.data) {
           var buf = Buffer.from(accInfo.data)
-          serializeBoardData(buf);
+          unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(serializeBoardData));
         }
       }
     }
@@ -94,12 +94,10 @@ export const HomeView = () => {
     var playerSize = 32 + 12
     for (let i = 0; i < players; i++) {
       playersArray.push({
-        id: new PublicKey(buf.subarray(4 + i * playerSize, 36 + i * playerSize)),
-        attrs: [
-          buf.readInt32LE(36 + (i * playerSize)),
-          buf.readInt32LE(36 + (i * playerSize) + 4),
-          buf.readInt32LE(36 + (i * playerSize) + 8),
-        ],
+        Address: new PublicKey(buf.subarray(4 + i * playerSize, 36 + i * playerSize)),
+        IsActive: Boolean(buf.readInt32LE(36 + (i * playerSize))), 
+        Hp: buf.readInt32LE(36 + (i * playerSize) + 4),
+        Coins: buf.readInt32LE(36 + (i * playerSize) + 8),
       });
     }
     var cardsOffset = 4 + playerSize * players
@@ -107,10 +105,19 @@ export const HomeView = () => {
     var cardSize = 37
     for (let i = 0; i < cards; i++) {
       cardsArray.push({
-        id: buf.readInt32LE(cardsOffset + 4 + cardSize * i),
-        pubkey: new PublicKey(buf.subarray(cardsOffset + 8 + cardSize * i, cardsOffset + 8 + 32 + cardSize * i)),
-        place: buf.readUInt8(cardsOffset + 40 + cardSize * i),
+        CardIndex: buf.readInt32LE(cardsOffset + 4 + cardSize * i),
+        MintAddress: new PublicKey(buf.subarray(cardsOffset + 8 + cardSize * i, cardsOffset + 8 + 32 + cardSize * i)),
+        CardPlace: buf.readUInt8(cardsOffset + 40 + cardSize * i),
+        Metadata: {
+          Picture: 69,
+          Name: "Good card",
+          Description: "Descriptive description",
+        },
       });
+    }
+    return {
+      Players: players,
+      Cards: cards,
     }
   }
 
