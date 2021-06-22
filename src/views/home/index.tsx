@@ -108,7 +108,7 @@ export const HomeView = () => {
       var cardSize = 37
       for (let i = 0; i < cards; i++) {
         cardsArray.push({
-          CardIndex: buf.readInt32LE(cardsOffset + 4 + cardSize * i),
+          CardId: buf.readInt32LE(cardsOffset + 4 + cardSize * i),
           MintAddress: new PublicKey(buf.subarray(cardsOffset + 8 + cardSize * i, cardsOffset + 8 + 32 + cardSize * i)).toBase58(),
           CardPlace: buf.readUInt8(cardsOffset + 40 + cardSize * i),
           Metadata: {
@@ -121,6 +121,7 @@ export const HomeView = () => {
       return {
         Players: playersArray,
         Cards: cardsArray,
+        EndTurnCardId: 0,
       }
     }
   }
