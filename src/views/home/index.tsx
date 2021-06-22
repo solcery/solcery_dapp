@@ -118,10 +118,6 @@ export const HomeView = () => {
           },
         });
       }
-      console.log(playersArray)
-      console.log(cardsArray)
-      console.log(playersArray[0].Address)
-      console.log(wallet.publicKey.toBase58()) 
       return {
         Players: playersArray,
         Cards: cardsArray,
