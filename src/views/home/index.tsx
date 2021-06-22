@@ -24,12 +24,12 @@ export function set_unity_wallet_connected(isConnected: boolean) {
 }
 
 export function set_unity_card_creation_signed(cardName: string, isSigned: boolean) {
-  var data = { CardName : cardName, IsSigned: isSigned };
+  var data = { CardName: cardName, IsSigned: isSigned };
   unityContext.send("ReactToUnity", "SetCardCreationSigned", JSON.stringify(data));
 }
 
 export function set_unity_card_creation_confirmed(cardName: string, isConfirmed: boolean) {
-  var data = { CardName : cardName, IsConfirmed: isConfirmed };
+  var data = { CardName: cardName, IsConfirmed: isConfirmed };
   unityContext.send("ReactToUnity", "SetCardCreationConfirmed", JSON.stringify(data));
 }
 
@@ -97,7 +97,7 @@ export const HomeView = () => {
         var playerKey = new PublicKey(buf.subarray(4 + i * playerSize, 36 + i * playerSize));
         playersArray.push({
           Address: playerKey.toBase58(),
-          IsActive: Boolean(buf.readInt32LE(36 + (i * playerSize))), 
+          IsActive: Boolean(buf.readInt32LE(36 + (i * playerSize))),
           Hp: buf.readInt32LE(36 + (i * playerSize) + 4),
           Coins: buf.readInt32LE(36 + (i * playerSize) + 8),
           IsMe: playerKey.toBase58() == wallet.publicKey.toBase58(),
@@ -126,7 +126,7 @@ export const HomeView = () => {
     }
   }
 
-  const createBoard = async() => {
+  const createBoard = async () => {
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
@@ -155,7 +155,7 @@ export const HomeView = () => {
           programId,
           data: buf,
         });
-        instructions.push(createBoardIx);     
+        instructions.push(createBoardIx);
         var buf = Buffer.allocUnsafe(1);
         buf.writeInt8(2, 0); // instruction = joinBoard
         const joinBoardIx = new TransactionInstruction({
@@ -179,17 +179,54 @@ export const HomeView = () => {
       }
     }
   }
-  unityContext.on("CreateBoard", createBoard);
 
-  
-  const createCard = async(cardData: string, cardName: string) => {
+  const joinBoard = async (boardAccountKey: string) => {
+    if (wallet === undefined) {
+      console.log('wallet undefined')
+    }
+    else {
+      if (wallet?.publicKey) {
+        var accounts: Account[];
+        accounts = []
+      
+        var instructions = [];
+        var boardAccountPublicKey = new PublicKey(boardAccountKey);
+
+        var buf = Buffer.allocUnsafe(1);
+        buf.writeInt8(2, 0); // instruction = joinBoard
+        const joinBoardIx = new TransactionInstruction({
+          keys: [
+            { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+            { pubkey: boardAccountPublicKey, isSigner: false, isWritable: true },
+          ],
+          programId,
+          data: buf,
+        });
+        instructions.push(joinBoardIx);
+        sendTransaction(connection, wallet, instructions, accounts).then(() => {
+          notify({
+            message: "Board started",
+            description: "Started board " + boardAccountPublicKey,
+          });
+          var cookies = new Cookies();
+          cookies.set('boardAccountKey', boardAccountPublicKey.toBase58());
+          updateBoard();
+        });
+      }
+    }
+  };
+  unityContext.on("CreateBoard", createBoard);
+  unityContext.on("JoinBoard", (boardAccountKey) => joinBoard(boardAccountKey));
+
+
+  const createCard = async (cardData: string, cardName: string) => {
     var accounts: Account[];
     accounts = [];
     var buf = joinedBufferToBuffer(cardData);
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
-    else {      
+    else {
       if (wallet?.publicKey) {
         let instructions: TransactionInstruction[] = [];
         var mintAccountPublicKey = createUninitializedMint(
