@@ -44,10 +44,10 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/28_board_3.loader.js",
-  dataUrl: "unity_build/28_board_3.data",
-  frameworkUrl: "unity_build/28_board_3.framework.js",
-  codeUrl: "unity_build/28_board_3.wasm",
+  loaderUrl: "unity_build/29_board_4_no_capture.loader.js",
+  dataUrl: "unity_build/29_board_4_no_capture.data",
+  frameworkUrl: "unity_build/29_board_4_no_capture.framework.js",
+  codeUrl: "unity_build/29_board_4_no_capture.wasm",
   streamingAssetsUrl: "StreamingAssets"
 });
 
