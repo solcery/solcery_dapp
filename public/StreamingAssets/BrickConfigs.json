@@ -81,11 +81,16 @@
         "Type": 0,
         "Subtype": 100,
         "Description": "Moves current card to place",
-        "HasField": true,
+        "HasField": false,
         "FieldType": 0,
-        "FieldName": "PlaceIndex",
+        "FieldName": "",
         "HasObjectSelection": false,
-        "Slots": []
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Player index"
+          },
+        ]
       },
       {
         "Name": "SetPlayerAttr",
@@ -128,18 +133,26 @@
         ]
       },
       {
-        "Name": "ApplyToRandomCardInPlace",
+        "Name": "ApplyToPlace",
         "Type": 0,
         "Subtype": 103,
-        "Description": "no comment",
-        "HasField": true,
+        "Description": "Applies action to random card in place",
+        "HasField": false,
         "FieldType": 0,
         "FieldName": "AttrIndex",
         "HasObjectSelection": false,
         "Slots": [
           {
+            "Type": 2,
+            "Name": "Place index"
+          },
+          {
             "Type": 0,
             "Name": "Action"
+          },
+          {
+            "Type": 2,
+            "Name": "Limit (0 = no limit)"
           },
         ]
       },
@@ -403,9 +416,25 @@
         "Type": 2,
         "Subtype": 102,
         "Description": "Returns cards amount at place",
-        "HasField": true,
+        "HasField": false,
         "FieldType": 0,
-        "FieldName": "PlaceIndex",
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Place index"
+          },
+        ]
+      },
+      {
+        "Name": "Get current place",
+        "Type": 2,
+        "Subtype": 103,
+        "Description": "Returns current place of card",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
         "HasObjectSelection": false,
         "Slots": []
       }

@@ -164,7 +164,7 @@ export const HomeView = () => {
         playersArray.push({
           Address: playerKey.toBase58(),
           IsActive: Boolean(buf.readInt32LE(36 + (i * playerSize))),
-          Hp: buf.readInt32LE(36 + (i * playerSize) + 4),
+          HP: buf.readInt32LE(36 + (i * playerSize) + 4),
           Coins: buf.readInt32LE(36 + (i * playerSize) + 8),
           IsMe: playerKey.toBase58() == wallet.publicKey.toBase58(),
         })
@@ -217,8 +217,8 @@ export const HomeView = () => {
         });
         accounts.push(boardAccount);
         var instructions = [createBoardAccountIx];
-        var testCardPubkey = new PublicKey('GbK7Xw9rxgWUpfHJT7ZnzxRjJqSerQt2Du4dpeCaRDh');
-        var testCardPubkey2 = new PublicKey('BwuX3tD7GyKxfU8cACBA2XbX1HAAs6v4KqMum6Sf53Vn');
+        var testCardPubkey = new PublicKey('HYe5uX4MoM61UFsoHCzJcXQA8DwwGyaGpU7fbhU9DFyo');
+        var testCardPubkey2 = new PublicKey('7pGZJi2wYdU4WLcinJb923PykGddw377QfCS2K6CQNMk');
         var buf = Buffer.allocUnsafe(11);
         buf.writeInt8(1, 0); // instruction = createBoard
         buf.writeUInt32LE(30, 1); // 30 cards
@@ -432,7 +432,7 @@ export const HomeView = () => {
 
 
 
-  unityContext.on("UseCard", (cardAccountKey) => {
+  unityContext.on("UseCard", (cardAccountKey, cardId) => {
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
@@ -445,9 +445,9 @@ export const HomeView = () => {
           accounts = []
           var cardPubkey = new PublicKey(cardAccountKey);
           var boardAccountPubkey = new PublicKey(boardAccountStringKey);
-          var buf = Buffer.allocUnsafe(1);
-          buf.writeInt8(2, 0); // instruction = cast
-
+          var buf = Buffer.allocUnsafe(5);
+          buf.writeInt8(3, 0); // instruction = cast
+          buf.writeUInt32LE(cardId, 1);
           console.log('Sending buffer', buf);
           const castIx = new TransactionInstruction({
             keys: [
