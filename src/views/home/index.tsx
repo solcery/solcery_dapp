@@ -17,6 +17,8 @@ import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-
 import { SystemProgram, TransferParams } from "@solana/web3.js";
 import Cookies from 'universal-cookie';
 
+import bs58 from 'bs58';
+
 export function set_unity_wallet_connected(isConnected: boolean) {
   console.log('home connected');
   var data = { IsConnected: isConnected };
@@ -99,6 +101,10 @@ export const HomeView = () => {
       Description: "Error",
     }
   }
+
+
+
+
 
   const updateBoard = async () => {
     var cookies = new Cookies();
@@ -211,10 +217,13 @@ export const HomeView = () => {
         });
         accounts.push(boardAccount);
         var instructions = [createBoardAccountIx];
-        var testCardPubkey = new PublicKey('3evdg8vvr5362siHC7orV8ayQ6SG3BGgcWTUzvogvvyQ');
+        var testCardPubkey = new PublicKey('GbK7Xw9rxgWUpfHJT7ZnzxRjJqSerQt2Du4dpeCaRDh');
+        var testCardPubkey2 = new PublicKey('BwuX3tD7GyKxfU8cACBA2XbX1HAAs6v4KqMum6Sf53Vn');
         var buf = Buffer.allocUnsafe(6);
         buf.writeInt8(1, 0); // instruction = createBoard
-        buf.writeUInt32LE(60, 1); // 60 cards
+        buf.writeUInt32LE(30, 1); // 30 cards
+        buf.writeInt8(1, 5); // to deck
+        buf.writeUInt32LE(30, 1); // 60 cards
         buf.writeInt8(1, 5); // to deck
         console.log('Sending buffer', buf);
 
@@ -223,6 +232,7 @@ export const HomeView = () => {
             { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
             { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
             { pubkey: testCardPubkey, isSigner: false, isWritable: false },
+            { pubkey: testCardPubkey2, isSigner: false, isWritable: false },
           ],
           programId,
           data: buf,
@@ -262,7 +272,9 @@ export const HomeView = () => {
         accounts = []
       
         var instructions = [];
-        var boardAccountPublicKey = new PublicKey(boardAccountKey);
+        var keyBufRaw = Buffer.from(boardAccountKey, 'ascii');
+        var newBuf = keyBufRaw.slice(0, 44);
+        var boardAccountPublicKey = new PublicKey(newBuf.toString('utf8'));
 
         var buf = Buffer.allocUnsafe(1);
         buf.writeInt8(2, 0); // instruction = joinBoard

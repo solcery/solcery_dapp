@@ -57,53 +57,25 @@
         ]
       },
       {
-        "Name": "Take damage",
+        "Name": "Loop",
         "Type": 0,
         "Subtype": 3,
-        "Description": "Deals <b>amount</b> of damage to unit.",
+        "Description": "Applies <b>action</b> if <b>amount</b> times.",
         "HasField": false,
-        "FieldType": 0,
-        "FieldName": "",
-        "HasObjectSelection": true,
+        "FieldType": 1,
+        "FieldName": "TestField",
+        "HasObjectSelection": false,
         "Slots": [
           {
             "Type": 2,
             "Name": "Amount"
-          }
+          },
+          {
+            "Type": 0,
+            "Name": "Action"
+          },
         ]
       },
-      {
-        "Name": "Heal",
-        "Type": 0,
-        "Subtype": 4,
-        "Description": "Heals unit for <b>amount</b> of HP.",
-        "HasField": false,
-        "FieldType": 0,
-        "FieldName": "",
-        "HasObjectSelection": true,
-        "Slots": [
-          {
-            "Type": 2,
-            "Name": "Amount"
-          }
-        ]
-      },
-      {
-        "Name": "Deal",
-        "Type": 0,
-        "Subtype": 5,
-        "Description": "Lalala",
-        "HasField": false,
-        "FieldType": 0,
-        "FieldName": "",
-        "HasObjectSelection": true,
-        "Slots": [
-          {
-            "Type": 2,
-            "Name": "Amount"
-          }
-        ]
-      }
     ],
     "Condition": [
       {
