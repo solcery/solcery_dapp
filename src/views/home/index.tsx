@@ -219,12 +219,12 @@ export const HomeView = () => {
         var instructions = [createBoardAccountIx];
         var testCardPubkey = new PublicKey('GbK7Xw9rxgWUpfHJT7ZnzxRjJqSerQt2Du4dpeCaRDh');
         var testCardPubkey2 = new PublicKey('BwuX3tD7GyKxfU8cACBA2XbX1HAAs6v4KqMum6Sf53Vn');
-        var buf = Buffer.allocUnsafe(6);
+        var buf = Buffer.allocUnsafe(11);
         buf.writeInt8(1, 0); // instruction = createBoard
         buf.writeUInt32LE(30, 1); // 30 cards
         buf.writeInt8(1, 5); // to deck
-        buf.writeUInt32LE(30, 1); // 60 cards
-        buf.writeInt8(1, 5); // to deck
+        buf.writeUInt32LE(30, 6); // 60 cards
+        buf.writeInt8(1, 10); // to deck
         console.log('Sending buffer', buf);
 
         const createBoardIx = new TransactionInstruction({

@@ -76,6 +76,73 @@
           },
         ]
       },
+      {
+        "Name": "MoveTo",
+        "Type": 0,
+        "Subtype": 100,
+        "Description": "Moves current card to place",
+        "HasField": true,
+        "FieldType": 0,
+        "FieldName": "PlaceIndex",
+        "HasObjectSelection": false,
+        "Slots": []
+      },
+      {
+        "Name": "SetPlayerAttr",
+        "Type": 0,
+        "Subtype": 101,
+        "Description": "0 - active, 1 - hp, 2 - mana",
+        "HasField": true,
+        "FieldType": 0,
+        "FieldName": "AttrIndex",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "PlayerIndex"
+          },
+          {
+            "Type": 2,
+            "Name": "AttrValue"
+          },
+        ]
+      },
+      {
+        "Name": "AddPlayerAttr",
+        "Type": 0,
+        "Subtype": 102,
+        "Description": "0 - active, 1 - hp, 2 - mana",
+        "HasField": true,
+        "FieldType": 0,
+        "FieldName": "AttrIndex",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "PlayerIndex"
+          },
+          {
+            "Type": 2,
+            "Name": "AttrValue"
+          },
+        ]
+      },
+      {
+        "Name": "ApplyToRandomCardInPlace",
+        "Type": 0,
+        "Subtype": 103,
+        "Description": "no comment",
+        "HasField": true,
+        "FieldType": 0,
+        "FieldName": "AttrIndex",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 0,
+            "Name": "Action"
+          },
+        ]
+      },
     ],
     "Condition": [
       {
@@ -215,6 +282,17 @@
             "Name": "Value #2"
           }
         ]
+      },
+      {
+        "Name": "Is at place",
+        "Type": 1,
+        "Subtype": 100,
+        "Description": "Returns true card is at given place",
+        "HasField": true,
+        "FieldType": 0,
+        "FieldName": "Place Index",
+        "HasObjectSelection": false,
+        "Slots": []
       }
     ],
     "Value": [
@@ -252,17 +330,6 @@
             "Name": "Negative"
           }
         ]
-      },
-      {
-        "Name": "Current Health",
-        "Type": 2,
-        "Subtype": 4,
-        "Description": "Returns current HP of unit.",
-        "HasField": false,
-        "FieldType": 0,
-        "FieldName": "",
-        "HasObjectSelection": true,
-        "Slots": []
       },
       {
         "Name": "Add",
@@ -303,6 +370,44 @@
             "Name": "Value #2"
           }
         ]
+      },
+      {
+        "Name": "Get player attr",
+        "Type": 2,
+        "Subtype": 100,
+        "Description": "0 - active, 1 - hp, 2 - mana",
+        "HasField": true,
+        "FieldType": 0,
+        "FieldName": "Attr index",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Player index"
+          },
+        ]
+      },
+      {
+        "Name": "Get owner index",
+        "Type": 2,
+        "Subtype": 101,
+        "Description": "Returns owner's index (1 or 2) or 0 if neutral",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": []
+      },
+      {
+        "Name": "Get cards amount",
+        "Type": 2,
+        "Subtype": 102,
+        "Description": "Returns cards amount at place",
+        "HasField": true,
+        "FieldType": 0,
+        "FieldName": "PlaceIndex",
+        "HasObjectSelection": false,
+        "Slots": []
       }
     ]
   }
