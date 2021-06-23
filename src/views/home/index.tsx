@@ -52,7 +52,7 @@ const unityContext = new UnityContext({
 });
 
 export const HomeView = () => {
-  var boardCollection = {};
+  var boardCollection : { [id: string] : Object; } = {};
 
   const updateCollection = function () {
     var cardsArray = [];
@@ -77,21 +77,26 @@ export const HomeView = () => {
     var cardInfo = await connection.getAccountInfo(new PublicKey(pubkey));
     console.log('cardClientMetadataSize')
     console.log(cardInfo)
-    if (cardInfo) {
-      if (cardInfo.data) {
-        var clientMetadata = Buffer.from(cardInfo.data).subarray(4);
-        console.log(clientMetadata)
-        var picture = clientMetadata.readUInt32LE(0);
-        var nameLength = clientMetadata.readUInt32LE(4);
-        var descriptionLength = clientMetadata.readUInt32LE(4 + nameLength);
-        var name = clientMetadata.toString('utf8', 8, 8 + nameLength);
-        var description = clientMetadata.toString('utf8', 12 + nameLength, 12 + nameLength + descriptionLength);
-        return {
-          Picture: picture,
-          Name: name,
-          Description: description,
-        }
+    if (cardInfo?.data) {
+      var clientMetadata = Buffer.from(cardInfo?.data);
+      var clientMetadataSize = clientMetadata.readUInt32LE(0);
+      clientMetadata = clientMetadata.slice(4, 4 + clientMetadataSize)
+      console.log(clientMetadata)
+      var picture = clientMetadata.readUInt32LE(0);
+      var nameLength = clientMetadata.readUInt32LE(4);
+      var descriptionLength = clientMetadata.readUInt32LE(4 + nameLength);
+      var name = clientMetadata.toString('utf8', 8, 8 + nameLength);
+      var description = clientMetadata.toString('utf8', 12 + nameLength, 12 + nameLength + descriptionLength);
+      return {
+        Picture: picture,
+        Name: name,
+        Description: description,
       }
+    }
+    return {
+      Picture: 0,
+      Name: "Error",
+      Description: "Error",
     }
   }
 
@@ -100,12 +105,12 @@ export const HomeView = () => {
     var boardAccountKey = cookies.get('boardAccountKey');
     if (boardAccountKey) {
       var accInfo = await connection.getAccountInfo(new PublicKey(boardAccountKey));
-      if (accInfo) {
-        if (accInfo.data) {
-          var buf = Buffer.from(accInfo.data);
+        if (accInfo?.data) {
+          var buf = Buffer.from(accInfo?.data);
+          await updateBoardCollectionMetadata(buf);
           var boardData = serializeBoardData(buf);
-          // const distCards = [...new Set(boardData?.Cards.map(x => x.MintAddress))];
-          // // var newBoardCollection = {};
+          //const distCards = [...new Set(boardData?.Cards.map(x => x.MintAddress))];
+          // var newBoardCollection = {};
           // var newBoardCollection: { [id: string] : Object; } = {};
           // for (let i = 0; i < distCards.length; i++) {
           //   console.log('destCard')
@@ -122,7 +127,22 @@ export const HomeView = () => {
           unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(boardData));            
         }
       }
+  }
+
+  const updateBoardCollectionMetadata = async (buf: Buffer) => {
+    var newBoardCollection : { [id: string] : Object; } = {};
+    var players = buf.readUInt32LE(0)
+    var playerSize = 32 + 12
+    var cardsOffset = 4 + playerSize * players
+    var cards = buf.readUInt32LE(cardsOffset)
+    var cardSize = 37
+    for (let i = 0; i < cards; i++) {
+      var cardKey = new PublicKey(buf.subarray(cardsOffset + 8 + cardSize * i, cardsOffset + 8 + 32 + cardSize * i)).toBase58(); 
+      if (!newBoardCollection[cardKey]) {
+        newBoardCollection[cardKey] = await getCardClientMetaData(cardKey);
+      } 
     }
+    boardCollection = newBoardCollection;
   }
 
 
@@ -147,16 +167,23 @@ export const HomeView = () => {
       var cards = buf.readUInt32LE(cardsOffset)
       var cardSize = 37
       for (let i = 0; i < cards; i++) {
-        cardsArray.push({
+        var cardKey = new PublicKey(buf.subarray(cardsOffset + 8 + cardSize * i, cardsOffset + 8 + 32 + cardSize * i)).toBase58();
+        var cardData = {
           CardId: buf.readInt32LE(cardsOffset + 4 + cardSize * i),
-          MintAddress: new PublicKey(buf.subarray(cardsOffset + 8 + cardSize * i, cardsOffset + 8 + 32 + cardSize * i)).toBase58(),
+          MintAddress: cardKey,
           CardPlace: buf.readUInt8(cardsOffset + 40 + cardSize * i),
-          Metadata: {
+          Metadata: {},
+        }
+        if (boardCollection[cardKey]) {
+          cardData.Metadata = boardCollection[cardKey]
+        } else {
+          cardData.Metadata = {
             Picture: 69,
-            Name: "Good card",
-            Description: "Descriptive description",
-          },
-        });
+            Name: "Error",
+            Description: "Error",
+          }
+        }
+        cardsArray.push(cardData);
       }
       return {
         Players: playersArray,
