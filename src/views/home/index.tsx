@@ -52,6 +52,7 @@ const unityContext = new UnityContext({
 });
 
 export const HomeView = () => {
+  var boardCollection = {};
 
   const updateCollection = function () {
     var cardsArray = [];
@@ -61,7 +62,7 @@ export const HomeView = () => {
     cardsAmount = cardsAmount || 0;
     for (let i = 0; i < cardsAmount; i++) {
       cardsArray.push({
-        MintAdress: cookies.get('cards[' + i + '][key]'),
+        MintAddress: cookies.get('cards[' + i + '][key]'),
         Metadata: {
           Picture: parseInt(cookies.get('cards[' + i + '][picture]')),
           Name: cookies.get('cards[' + i + '][name]'),
@@ -72,6 +73,28 @@ export const HomeView = () => {
     unityContext.send("ReactToUnity", "UpdateCollection", JSON.stringify({ Cards: cardsArray }));
   }
 
+  const getCardClientMetaData = async (pubkey: string) => {
+    var cardInfo = await connection.getAccountInfo(new PublicKey(pubkey));
+    console.log('cardClientMetadataSize')
+    console.log(cardInfo)
+    if (cardInfo) {
+      if (cardInfo.data) {
+        var clientMetadata = Buffer.from(cardInfo.data).subarray(4);
+        console.log(clientMetadata)
+        var picture = clientMetadata.readUInt32LE(0);
+        var nameLength = clientMetadata.readUInt32LE(4);
+        var descriptionLength = clientMetadata.readUInt32LE(4 + nameLength);
+        var name = clientMetadata.toString('utf8', 8, 8 + nameLength);
+        var description = clientMetadata.toString('utf8', 12 + nameLength, 12 + nameLength + descriptionLength);
+        return {
+          Picture: picture,
+          Name: name,
+          Description: description,
+        }
+      }
+    }
+  }
+
   const updateBoard = async () => {
     var cookies = new Cookies();
     var boardAccountKey = cookies.get('boardAccountKey');
@@ -79,12 +102,29 @@ export const HomeView = () => {
       var accInfo = await connection.getAccountInfo(new PublicKey(boardAccountKey));
       if (accInfo) {
         if (accInfo.data) {
-          var buf = Buffer.from(accInfo.data)
-          unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(serializeBoardData(buf)));
+          var buf = Buffer.from(accInfo.data);
+          var boardData = serializeBoardData(buf);
+          // const distCards = [...new Set(boardData?.Cards.map(x => x.MintAddress))];
+          // // var newBoardCollection = {};
+          // var newBoardCollection: { [id: string] : Object; } = {};
+          // for (let i = 0; i < distCards.length; i++) {
+          //   console.log('destCard')
+          //   var key = distCards[i];
+          //   console.log(key)
+          //   let metadata = await getCardClientMetaData(key);
+          //   console.log(metadata);
+          //   if (metadata) {
+          //     newBoardCollection[key] = metadata
+          //   }
+          // }
+          // boardCollection = newBoardCollection;
+          // console.log(boardCollection);
+          unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(boardData));            
         }
       }
     }
   }
+
 
   const serializeBoardData = (buf: Buffer) => {
     if (wallet?.publicKey) {
@@ -144,13 +184,18 @@ export const HomeView = () => {
         });
         accounts.push(boardAccount);
         var instructions = [createBoardAccountIx];
-        var buf = Buffer.allocUnsafe(1);
+        var testCardPubkey = new PublicKey('3evdg8vvr5362siHC7orV8ayQ6SG3BGgcWTUzvogvvyQ');
+        var buf = Buffer.allocUnsafe(6);
         buf.writeInt8(1, 0); // instruction = createBoard
+        buf.writeUInt32LE(60, 1); // 60 cards
+        buf.writeInt8(1, 5); // to deck
         console.log('Sending buffer', buf);
+
         const createBoardIx = new TransactionInstruction({
           keys: [
             { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
             { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
+            { pubkey: testCardPubkey, isSigner: false, isWritable: false },
           ],
           programId,
           data: buf,
@@ -361,10 +406,9 @@ export const HomeView = () => {
           accounts = []
           var cardPubkey = new PublicKey(cardAccountKey);
           var boardAccountPubkey = new PublicKey(boardAccountStringKey);
-          var buf = Buffer.allocUnsafe(3);
+          var buf = Buffer.allocUnsafe(1);
           buf.writeInt8(2, 0); // instruction = cast
-          buf.writeInt8(0, 1); // caster = 0
-          buf.writeInt8(0, 2); // target = 1
+
           console.log('Sending buffer', buf);
           const castIx = new TransactionInstruction({
             keys: [
