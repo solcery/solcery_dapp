@@ -301,11 +301,16 @@
         "Type": 1,
         "Subtype": 100,
         "Description": "Returns true card is at given place",
-        "HasField": true,
+        "HasField": false,
         "FieldType": 0,
         "FieldName": "Place Index",
         "HasObjectSelection": false,
-        "Slots": []
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Value #1"
+          },
+        ]
       }
     ],
     "Value": [

@@ -42,6 +42,7 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
   for (var i = 0; i < strBytesArray.length; i++) {
     buf.writeInt8(parseInt(strBytesArray[i]), i + 1);
   }
+  console.log(buf)
   return buf
 }
 
@@ -217,8 +218,8 @@ export const HomeView = () => {
         });
         accounts.push(boardAccount);
         var instructions = [createBoardAccountIx];
-        var testCardPubkey = new PublicKey('HYe5uX4MoM61UFsoHCzJcXQA8DwwGyaGpU7fbhU9DFyo');
-        var testCardPubkey2 = new PublicKey('7pGZJi2wYdU4WLcinJb923PykGddw377QfCS2K6CQNMk');
+        var testCardPubkey = new PublicKey('Dv2mAZZUqn2TASfQZbkdBsc1XwvgUpwsX2BNDnTJxGST');
+        var testCardPubkey2 = new PublicKey('Dv2mAZZUqn2TASfQZbkdBsc1XwvgUpwsX2BNDnTJxGST');
         var buf = Buffer.allocUnsafe(11);
         buf.writeInt8(1, 0); // instruction = createBoard
         buf.writeUInt32LE(30, 1); // 30 cards
@@ -304,6 +305,10 @@ export const HomeView = () => {
 
 
   const createCard = async (cardData: string, cardName: string) => {
+
+    console.log('createCard')
+    console.log(cardData)
+    var testData = '31|0|0|0|14|0|0|0|4|0|0|0|67|111|105|110|15|0|0|0|71|105|118|101|115|32|111|110|101|32|109|111|110|101|121|0|0|0|0|2|0|0|0|1|0|0|0|100|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|100|0|0|0|2|0|0|0|2|0|0|0|2|0|0|0|0|0|0|0|3|0|0|0|2|0|0|0|100|0|0|0|0|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0|1|0|0|0|6|0|0|0|2|0|0|0|100|0|0|0|2|0|0|0|2|0|0|0|101|0|0|0|2|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|101|0|0|0|2|0|0|0|2|0|0|0|101|0|0|0|2|0|0|0|3|0|0|0|2|0|0|0|100|0|0|0|0|0|0|0|2|0|0|0|101|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0|0|0|0|0|103|0|0|0|2|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|100|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0|2|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|100|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|102|0|0|0|2|0|0|0|2|0|0|0|101|0|0|0|2|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|100|0|0|0|2|0|0|0|2|0|0|0|2|0|0|0|103|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0'
     var accounts: Account[];
     accounts = [];
     var buf = joinedBufferToBuffer(cardData);
@@ -312,73 +317,22 @@ export const HomeView = () => {
     }
     else {
       if (wallet?.publicKey) {
-        let instructions: TransactionInstruction[] = [];
-        var mintAccountPublicKey = createUninitializedMint(
-          instructions,
-          wallet.publicKey,
-          await connection.getMinimumBalanceForRentExemption(MintLayout.span, 'singleGossip'),
-          accounts
-        );
-
-        var createMintIx = Token.createInitMintInstruction(
-          TOKEN_PROGRAM_ID,
-          mintAccountPublicKey,
-          0,
-          wallet.publicKey,
-          wallet.publicKey,
-        );
-        instructions.push(createMintIx);
-
-        let tokenAccountPublicKey = createTokenAccount(
-          instructions,
-          wallet.publicKey,
-          await connection.getMinimumBalanceForRentExemption(AccountLayout.span, 'singleGossip'),
-          mintAccountPublicKey,
-          wallet.publicKey,
-          accounts
-        );
-
-        var mintIx = Token.createMintToInstruction(
-          TOKEN_PROGRAM_ID,
-          mintAccountPublicKey,
-          tokenAccountPublicKey,
-          wallet.publicKey,
-          [],
-          1,
-        );
-        instructions.push(mintIx);
-
-        var setMintAuthorityIx = Token.createSetAuthorityInstruction(
-          TOKEN_PROGRAM_ID,
-          mintAccountPublicKey,
-          null,
-          'MintTokens',
-          wallet.publicKey,
-          [],
-        );
-        instructions.push(setMintAuthorityIx);
-
-        const cardMetadataAccountPublicKey = await PublicKey.createWithSeed(
-          mintAccountPublicKey, //card key
-          'SOLCERYCARD',
-          programId,
-        );
-        var createCardMetadataIx = SystemProgram.createAccountWithSeed({
-          fromPubkey: wallet.publicKey,
-          basePubkey: mintAccountPublicKey,
-          seed: 'SOLCERYCARD',
-          newAccountPubkey: cardMetadataAccountPublicKey,
-          lamports: await connection.getMinimumBalanceForRentExemption(buf.length, 'singleGossip'),
-          space: buf.length - 1,
+        var cardAccount = new Account()
+        var instructions = []
+        var createCardAccountIx = SystemProgram.createAccount({
           programId: programId,
+          space: buf.length,
+          lamports: await connection.getMinimumBalanceForRentExemption(buf.length, 'singleGossip'),
+          fromPubkey: wallet.publicKey,
+          newAccountPubkey: cardAccount.publicKey,
         });
-        instructions.push(createCardMetadataIx); // Mb we want this one to be in rust code?    
+        accounts.push(cardAccount);
+        instructions.push(createCardAccountIx); // Mb we want this one to be in rust code?    
 
         const saveMetadataIx = new TransactionInstruction({
           keys: [
             { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-            { pubkey: cardMetadataAccountPublicKey, isSigner: false, isWritable: true },
-            { pubkey: mintAccountPublicKey, isSigner: false, isWritable: false }
+            { pubkey: cardAccount.publicKey, isSigner: false, isWritable: true },
           ],
           programId,
           data: buf,
@@ -389,10 +343,11 @@ export const HomeView = () => {
           () => set_unity_card_creation_signed(cardName, true),
           () => set_unity_card_creation_signed(cardName, false)
         ).then(async () => {
+          console.log("test");
           set_unity_card_creation_confirmed(cardName, true);
           notify({
             message: "Card created",
-            description: "Created card " + cardMetadataAccountPublicKey.toBase58(),
+            description: "Created card " + cardAccount.publicKey.toBase58(),
           });
           let cardClientMetadataSize = buf.readUInt32LE(1);
         },
