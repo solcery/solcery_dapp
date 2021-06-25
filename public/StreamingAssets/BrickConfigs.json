@@ -77,6 +77,17 @@
         ]
       },
       {
+        "Name": "Card",
+        "Type": 0,
+        "Subtype": 4,
+        "Description": "Applies <b>action</b> if <b>amount</b> times.",
+        "HasField": true,
+        "FieldType": 0,
+        "FieldName": "TestField",
+        "HasObjectSelection": false,
+        "Slots": []
+      },
+      {
         "Name": "MoveTo",
         "Type": 0,
         "Subtype": 100,

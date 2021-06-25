@@ -57,55 +57,54 @@ const unityContext = new UnityContext({
 export const HomeView = () => {
   var boardCollection : { [id: string] : Object; } = {};
 
-  const updateCollection = function () {
-    var cardsArray = [];
-    const cookies = new Cookies();
-    var cardsAmountCookie = cookies.get('cardsAmount');
-    var cardsAmount = parseInt(cardsAmountCookie);
-    cardsAmount = cardsAmount || 0;
-    for (let i = 0; i < cardsAmount; i++) {
-      cardsArray.push({
-        MintAddress: cookies.get('cards[' + i + '][key]'),
-        Metadata: {
-          Picture: parseInt(cookies.get('cards[' + i + '][picture]')),
-          Name: cookies.get('cards[' + i + '][name]'),
-          Description: cookies.get('cards[' + i + '][description]'),
-        }
-      });
+  const buildRulesetFromCookies = () => {
+    var cookies = new Cookies();
+    var boardName = cookies.get("boardName") 
+    var name = 'board.' + boardName;
+    var deck = [] 
+    var init = []
+    var deckSize = parseInt(cookies.get(name + '.deck.size'))
+    for (let i = 0; i < deckSize; i++) {
+      deck.push({
+        key: new PublicKey(cookies.get(name + '.deck.' + i + '.key')),
+        amount: parseInt(cookies.get(name + '.deck.' + i + '.amount')),
+        place: parseInt(cookies.get(name + '.deck.' + i + '.place')),
+      })
     }
-    unityContext.send("ReactToUnity", "UpdateCollection", JSON.stringify({ Cards: cardsArray }));
-  }
-
-  const getCardClientMetaData = async (pubkey: string) => {
-    var cardInfo = await connection.getAccountInfo(new PublicKey(pubkey));
-    console.log('cardClientMetadataSize')
-    console.log(cardInfo)
-    if (cardInfo?.data) {
-      var clientMetadata = Buffer.from(cardInfo?.data);
-      var clientMetadataSize = clientMetadata.readUInt32LE(0);
-      clientMetadata = clientMetadata.slice(4, 4 + clientMetadataSize)
-      console.log(clientMetadata)
-      var picture = clientMetadata.readUInt32LE(0);
-      var nameLength = clientMetadata.readUInt32LE(4);
-      var descriptionLength = clientMetadata.readUInt32LE(4 + nameLength);
-      var name = clientMetadata.toString('utf8', 8, 8 + nameLength);
-      var description = clientMetadata.toString('utf8', 12 + nameLength, 12 + nameLength + descriptionLength);
-      return {
-        Picture: picture,
-        Name: name,
-        Description: description,
-      }
+    var initSize = parseInt(cookies.get(name + '.init.size'))
+    for (let i = 0; i < initSize; i++) {
+      init.push(parseInt(cookies.get(name + '.init.' + i)))
     }
     return {
-      Picture: 0,
-      Name: "Error",
-      Description: "Error",
+      deck: deck,
+      init: init,
     }
   }
 
-
-
-
+  const getCardClientMetaData = (clientMetadata: Buffer) => {
+    if (clientMetadata.length <= 0) {
+      return {
+        Picture: 1,
+        Name: "Error",
+        Description: "Error",
+      }
+    }
+    var pos = 4
+    var picture = clientMetadata.readUInt32LE(pos);
+    pos += 4;
+    var nameLength = clientMetadata.readUInt32LE(pos);
+    pos += 4;
+    var name = clientMetadata.toString('utf8', pos, pos + nameLength);
+    pos += nameLength;
+    var descriptionLength = clientMetadata.readUInt32LE(pos);
+    pos += 4;
+    var description = clientMetadata.toString('utf8', pos, pos + descriptionLength);
+    return {
+      Picture: picture,
+      Name: name,
+      Description: description,
+    }
+  }
 
   const updateBoard = async () => {
     var cookies = new Cookies();
@@ -114,83 +113,76 @@ export const HomeView = () => {
       var accInfo = await connection.getAccountInfo(new PublicKey(boardAccountKey));
         if (accInfo?.data) {
           var buf = Buffer.from(accInfo?.data);
-          await updateBoardCollectionMetadata(buf);
-          var boardData = serializeBoardData(buf);
-          //const distCards = [...new Set(boardData?.Cards.map(x => x.MintAddress))];
-          // var newBoardCollection = {};
-          // var newBoardCollection: { [id: string] : Object; } = {};
-          // for (let i = 0; i < distCards.length; i++) {
-          //   console.log('destCard')
-          //   var key = distCards[i];
-          //   console.log(key)
-          //   let metadata = await getCardClientMetaData(key);
-          //   console.log(metadata);
-          //   if (metadata) {
-          //     newBoardCollection[key] = metadata
-          //   }
-          // }
-          // boardCollection = newBoardCollection;
-          // console.log(boardCollection);
+          var boardData = await serializeBoardData(buf);
+          console.log("UpdateBoard")
+          console.log(JSON.stringify(boardData))
           unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(boardData));            
         }
       }
   }
 
-  const updateBoardCollectionMetadata = async (buf: Buffer) => {
-    var newBoardCollection : { [id: string] : Object; } = {};
-    var players = buf.readUInt32LE(0)
-    var playerSize = 32 + 12
-    var cardsOffset = 4 + playerSize * players
-    var cards = buf.readUInt32LE(cardsOffset)
-    var cardSize = 37
-    for (let i = 0; i < cards; i++) {
-      var cardKey = new PublicKey(buf.subarray(cardsOffset + 8 + cardSize * i, cardsOffset + 8 + 32 + cardSize * i)).toBase58(); 
-      if (!newBoardCollection[cardKey]) {
-        newBoardCollection[cardKey] = await getCardClientMetaData(cardKey);
-      } 
-    }
-    boardCollection = newBoardCollection;
-  }
-
-
-  const serializeBoardData = (buf: Buffer) => {
+  const serializeBoardData = async (buf: Buffer) => {
     if (wallet?.publicKey) {
       var playersArray = [];
       var cardsArray = [];
-
-      var players = buf.readUInt32LE(0)
-      var playerSize = 32 + 12
+      var cardTypes = [];
+      var players = buf.readUInt32LE(0);
+      var pos = 4;
       for (let i = 0; i < players; i++) {
-        var playerKey = new PublicKey(buf.subarray(4 + i * playerSize, 36 + i * playerSize));
-        playersArray.push({
+        var playerKey = new PublicKey(buf.subarray(pos, pos + 32));
+        pos += 32;
+        var isActive = Boolean(buf.readInt32LE(pos));
+        pos += 4;
+        var hp = buf.readInt32LE(pos);
+        pos += 4;
+        var coins = buf.readUInt32LE(pos);
+        pos += 4;
+        var playerData = {
           Address: playerKey.toBase58(),
-          IsActive: Boolean(buf.readInt32LE(36 + (i * playerSize))),
-          HP: buf.readInt32LE(36 + (i * playerSize) + 4),
-          Coins: buf.readInt32LE(36 + (i * playerSize) + 8),
+          IsActive: isActive,
+          HP: hp,
+          Coins: coins,
           IsMe: playerKey.toBase58() == wallet.publicKey.toBase58(),
-        })
+        }
+        playersArray.push(playerData)
       }
-      var cardsOffset = 4 + playerSize * players
-      var cards = buf.readUInt32LE(cardsOffset)
-      var cardSize = 37
+      var cardTypesAmount = buf.readUInt32LE(pos)
+      pos += 4;
+      for (let i = 0; i < cardTypesAmount; i++) {
+        var id = buf.readUInt32LE(pos)
+        pos += 4;
+        var cardTypeKey = new PublicKey(buf.subarray(pos, pos + 32)).toBase58();
+        pos += 32;
+        var cardDataSize = buf.readUInt32LE(pos)
+        pos += 4;
+        var cardType = {
+          Id: id,
+          MintAddress: cardTypeKey,
+          Metadata: getCardClientMetaData(buf.slice(pos, pos + cardDataSize))
+        }
+        cardTypes.push(cardType);
+        pos += cardDataSize;
+      }
+
+      var cards = buf.readUInt32LE(pos)
+      //console.log('cards: ', cards)
+      pos += 4;
       for (let i = 0; i < cards; i++) {
-        var cardKey = new PublicKey(buf.subarray(cardsOffset + 8 + cardSize * i, cardsOffset + 8 + 32 + cardSize * i)).toBase58();
-        var cardData = {
-          CardId: buf.readInt32LE(cardsOffset + 4 + cardSize * i),
-          MintAddress: cardKey,
-          CardPlace: buf.readUInt8(cardsOffset + 40 + cardSize * i),
-          Metadata: {},
+        var id = buf.readInt32LE(pos)
+        pos += 4;
+        var cardTypeIndex = buf.readInt32LE(pos)
+        pos += 4;
+        var place = buf.readUInt8(pos)
+        pos += 1;
+        var card = {
+          CardId: id,
+          CardType: cardTypeIndex,
+          MintAddress: cardTypes[cardTypeIndex].MintAddress,
+          CardPlace: place,
+          Metadata: cardTypes[cardTypeIndex].Metadata,
         }
-        if (boardCollection[cardKey]) {
-          cardData.Metadata = boardCollection[cardKey]
-        } else {
-          cardData.Metadata = {
-            Picture: 69,
-            Name: "Error",
-            Description: "Error",
-          }
-        }
-        cardsArray.push(cardData);
+        //console.log("card: ", card)
+        cardsArray.push(card);
       }
       return {
         Players: playersArray,
@@ -205,36 +197,51 @@ export const HomeView = () => {
       console.log('wallet undefined')
     }
     else {
-      if (wallet?.publicKey) {
+      if (wallet?.publicKey) { 
         var boardAccount = new Account()
         var accounts: Account[];
         accounts = []
         var createBoardAccountIx = SystemProgram.createAccount({
           programId: programId,
-          space: 2353,
-          lamports: await connection.getMinimumBalanceForRentExemption(2353, 'singleGossip'),
+          space: 23530,
+          lamports: await connection.getMinimumBalanceForRentExemption(23530, 'singleGossip'),
           fromPubkey: wallet.publicKey,
           newAccountPubkey: boardAccount.publicKey,
         });
+
         accounts.push(boardAccount);
         var instructions = [createBoardAccountIx];
-        var testCardPubkey = new PublicKey('Dv2mAZZUqn2TASfQZbkdBsc1XwvgUpwsX2BNDnTJxGST');
-        var testCardPubkey2 = new PublicKey('Dv2mAZZUqn2TASfQZbkdBsc1XwvgUpwsX2BNDnTJxGST');
-        var buf = Buffer.allocUnsafe(11);
+        var keys = [
+          { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+          { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
+        ]
+
+        var ruleset = buildRulesetFromCookies();
+        var rulesetDeckLength = ruleset.deck.length
+        var bufferSize = 1 + 4 + rulesetDeckLength * 5 + 4 + ruleset.init.length * 4
+        var buf = Buffer.allocUnsafe(bufferSize);
+        var pos = 0;
         buf.writeInt8(1, 0); // instruction = createBoard
-        buf.writeUInt32LE(30, 1); // 30 cards
-        buf.writeInt8(1, 5); // to deck
-        buf.writeUInt32LE(30, 6); // 60 cards
-        buf.writeInt8(1, 10); // to deck
+        pos += 1;
+        buf.writeUInt32LE(ruleset.deck.length, pos);
+        pos += 4;
+        for (let i = 0; i < ruleset.deck.length; i++) {
+          buf.writeUInt32LE(ruleset.deck[i].amount, pos)
+          pos += 4;
+          buf.writeUInt32LE(ruleset.deck[i].place, pos)
+          pos += 1;
+          keys.push({ pubkey: ruleset.deck[i].key, isSigner: false, isWritable: false })
+        }
+        buf.writeUInt32LE(ruleset.init.length, pos);
+        pos += 4;
+        for (let i = 0; i < ruleset.init.length; i++) {
+          buf.writeUInt32LE(ruleset.init[i], pos)
+          pos += 4
+        }
         console.log('Sending buffer', buf);
 
         const createBoardIx = new TransactionInstruction({
-          keys: [
-            { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-            { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
-            { pubkey: testCardPubkey, isSigner: false, isWritable: false },
-            { pubkey: testCardPubkey2, isSigner: false, isWritable: false },
-          ],
+          keys: keys,
           programId,
           data: buf,
         });
@@ -250,15 +257,19 @@ export const HomeView = () => {
           data: buf,
         });
         instructions.push(joinBoardIx);
-        sendTransaction(connection, wallet, instructions, accounts).then(() => {
+        sendTransaction(connection, wallet, instructions, accounts).then( async () => {
           notify({
             message: "Board started",
             description: "Started board " + boardAccount.publicKey,
           });
           var cookies = new Cookies();
           cookies.set('boardAccountKey', boardAccount.publicKey.toBase58());
-          updateBoard();
-        });
+          await updateBoard();
+        },
+        () => notify({
+          message: "Board create failed",
+          description: "Some error",
+        }));
       }
     }
   }
@@ -296,19 +307,20 @@ export const HomeView = () => {
           var cookies = new Cookies();
           cookies.set('boardAccountKey', boardAccountPublicKey.toBase58());
           updateBoard();
-        });
+        },
+        () => notify({
+          message: "Board join failed",
+          description: "Some error",
+        }));
       }
     }
   };
   unityContext.on("CreateBoard", createBoard);
   unityContext.on("JoinBoard", (boardAccountKey) => joinBoard(boardAccountKey));
 
+  //6ZHQiVNNHj7QbRaDobP4R5FYsTCFL5hxxNc7eqmNhioA
 
   const createCard = async (cardData: string, cardName: string) => {
-
-    console.log('createCard')
-    console.log(cardData)
-    var testData = '31|0|0|0|14|0|0|0|4|0|0|0|67|111|105|110|15|0|0|0|71|105|118|101|115|32|111|110|101|32|109|111|110|101|121|0|0|0|0|2|0|0|0|1|0|0|0|100|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|100|0|0|0|2|0|0|0|2|0|0|0|2|0|0|0|0|0|0|0|3|0|0|0|2|0|0|0|100|0|0|0|0|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0|1|0|0|0|6|0|0|0|2|0|0|0|100|0|0|0|2|0|0|0|2|0|0|0|101|0|0|0|2|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|101|0|0|0|2|0|0|0|2|0|0|0|101|0|0|0|2|0|0|0|3|0|0|0|2|0|0|0|100|0|0|0|0|0|0|0|2|0|0|0|101|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0|0|0|0|0|103|0|0|0|2|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|100|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0|2|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|100|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|102|0|0|0|2|0|0|0|2|0|0|0|101|0|0|0|2|0|0|0|0|0|0|0|1|0|0|0|0|0|0|0|100|0|0|0|2|0|0|0|2|0|0|0|2|0|0|0|103|0|0|0|2|0|0|0|0|0|0|0|2|0|0|0'
     var accounts: Account[];
     accounts = [];
     var buf = joinedBufferToBuffer(cardData);
@@ -321,8 +333,8 @@ export const HomeView = () => {
         var instructions = []
         var createCardAccountIx = SystemProgram.createAccount({
           programId: programId,
-          space: buf.length,
-          lamports: await connection.getMinimumBalanceForRentExemption(buf.length, 'singleGossip'),
+          space: buf.length - 1,
+          lamports: await connection.getMinimumBalanceForRentExemption(buf.length - 1, 'singleGossip'),
           fromPubkey: wallet.publicKey,
           newAccountPubkey: cardAccount.publicKey,
         });
@@ -338,12 +350,10 @@ export const HomeView = () => {
           data: buf,
         });
         instructions.push(saveMetadataIx);
-
         await sendTransaction(connection, wallet, instructions, accounts, true,
           () => set_unity_card_creation_signed(cardName, true),
           () => set_unity_card_creation_signed(cardName, false)
         ).then(async () => {
-          console.log("test");
           set_unity_card_creation_confirmed(cardName, true);
           notify({
             message: "Card created",
@@ -351,7 +361,7 @@ export const HomeView = () => {
           });
           let cardClientMetadataSize = buf.readUInt32LE(1);
         },
-          () => set_unity_card_creation_confirmed(cardName, false));
+        () => set_unity_card_creation_confirmed(cardName, false));
       }
     }
   };
@@ -376,7 +386,6 @@ export const HomeView = () => {
 
   unityContext.on("OnUnityLoaded", () => {
     updateBoard();
-    updateCollection();
     var data = { IsConnected: connected };
     unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
   });
@@ -408,7 +417,6 @@ export const HomeView = () => {
             keys: [
               { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
               { pubkey: boardAccountPubkey, isSigner: false, isWritable: true },
-              { pubkey: cardPubkey, isSigner: false, isWritable: false },
             ],
             programId,
             data: buf,
@@ -420,7 +428,11 @@ export const HomeView = () => {
               description: "Casted card " + cardPubkey,
             });
             updateBoard();
-          });
+          },
+          () => notify({
+            message: "Cast card failed",
+            description: "reason",
+          }));
         }
       }
     }
