@@ -47,10 +47,10 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/me.loader.js",
-  dataUrl: "unity_build/me.data",
-  frameworkUrl: "unity_build/me.framework.js",
-  codeUrl: "unity_build/me.wasm",
+  loaderUrl: "unity_build/coins_2.loader.js",
+  dataUrl: "unity_build/coins_2.data",
+  frameworkUrl: "unity_build/coins_2.framework.js",
+  codeUrl: "unity_build/coins_2.wasm",
   streamingAssetsUrl: "StreamingAssets"
 });
 
