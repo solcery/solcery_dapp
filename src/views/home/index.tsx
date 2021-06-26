@@ -265,6 +265,7 @@ export const HomeView = () => {
           var cookies = new Cookies();
           cookies.set('boardAccountKey', boardAccount.publicKey.toBase58());
           await updateBoard();
+          connection.onAccountChange(boardAccount.publicKey, updateBoard)
         },
         () => notify({
           message: "Board create failed",
@@ -307,6 +308,7 @@ export const HomeView = () => {
           var cookies = new Cookies();
           cookies.set('boardAccountKey', boardAccountPublicKey.toBase58());
           updateBoard();
+          connection.onAccountChange(boardAccountPublicKey, updateBoard)
         },
         () => notify({
           message: "Board join failed",
