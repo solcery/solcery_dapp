@@ -453,6 +453,28 @@
         "FieldName": "",
         "HasObjectSelection": false,
         "Slots": []
+      },
+      {
+        "Name": "GetCtxVar (WIP)",
+        "Type": 2,
+        "Subtype": 104,
+        "Description": "Returns id of player casted the card",
+        "HasField": true,
+        "FieldType": 0,
+        "FieldName": "Var index",
+        "HasObjectSelection": false,
+        "Slots": []
+      },
+      {
+        "Name": "CasterPlayerIndex",
+        "Type": 2,
+        "Subtype": 105,
+        "Description": "Returns id of player casted the card",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": []
       }
     ]
   }
