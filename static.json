@@ -1,0 +1,7 @@
+{
+    "headers": {
+        "/public/unity_build/*.gz": {
+          "Content-Encoding": "gzip"
+        }
+      }
+}
