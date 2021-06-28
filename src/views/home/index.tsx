@@ -47,10 +47,10 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/brotli.loader.js",
-  dataUrl: "unity_build/brotli.data.br",
-  frameworkUrl: "unity_build/brotli.framework.js.br",
-  codeUrl: "unity_build/brotli.wasm.br",
+  loaderUrl: "unity_build/gzip.loader.js",
+  dataUrl: "unity_build/gzip.data.gz",
+  frameworkUrl: "unity_build/gzip.framework.js.gz",
+  codeUrl: "unity_build/gzip.wasm.gz",
   streamingAssetsUrl: "StreamingAssets"
 });
 
