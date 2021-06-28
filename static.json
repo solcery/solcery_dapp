@@ -1,7 +1,11 @@
 {
-    "headers": {
-        "/public/unity_build/*.gz": {
-          "Content-Encoding": "gzip"
-        }
-      }
+  "root": "public/",
+  "routes": {
+    "/**": "index.html"
+  },
+  "headers": {
+    "/public/unity_build/*.gz": {
+      "Content-Encoding": "gzip"
+    }
+  }
 }
