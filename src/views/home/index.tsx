@@ -47,10 +47,10 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/ctrlxcv.loader.js",
-  dataUrl: "unity_build/ctrlxcv.data",
-  frameworkUrl: "unity_build/ctrlxcv.framework.js",
-  codeUrl: "unity_build/ctrlxcv.wasm",
+  loaderUrl: "unity_build/lines_and_pixels.loader.js",
+  dataUrl: "unity_build/lines_and_pixels.data",
+  frameworkUrl: "unity_build/lines_and_pixels.framework.js",
+  codeUrl: "unity_build/lines_and_pixels.wasm",
   streamingAssetsUrl: "StreamingAssets"
 });
 
