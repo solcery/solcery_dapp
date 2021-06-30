@@ -47,10 +47,10 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
 }
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/zoom_2.loader.js",
-  dataUrl: "unity_build/zoom_2.data",
-  frameworkUrl: "unity_build/zoom_2.framework.js",
-  codeUrl: "unity_build/zoom_2.wasm",
+  loaderUrl: "unity_build/zoom_3.loader.js",
+  dataUrl: "unity_build/zoom_3.data",
+  frameworkUrl: "unity_build/zoom_3.framework.js",
+  codeUrl: "unity_build/zoom_3.wasm",
   streamingAssetsUrl: "StreamingAssets"
 });
 
