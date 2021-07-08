@@ -12,7 +12,7 @@ import React, {
   useState,
 } from "react";
 import { notify } from "./../utils/notifications";
-import { set_unity_wallet_connected } from "./../views/home/index"
+import { set_unity_wallet_connected, onWalletConnected } from "./../views/home/index"
 import { useConnectionConfig } from "./connection";
 import { useLocalStorageState } from "./../utils/utils";
 import { LedgerWalletAdapter } from "../wallet-adapters/ledger";
@@ -123,6 +123,7 @@ export function WalletProvider({ children = null as any }) {
             message: "Wallet update",
             description: "Connected to wallet " + keyToDisplay,
           });
+          onWalletConnected();
           set_unity_wallet_connected(true);
         }
       });
