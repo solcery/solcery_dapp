@@ -52,10 +52,10 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
 
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/new_build_5.loader.js",
-  dataUrl: "unity_build/new_build_5.data",
-  frameworkUrl: "unity_build/new_build_5.framework.js",
-  codeUrl: "unity_build/new_build_5.wasm",
+  loaderUrl: "unity_build/new_build_8.loader.js",
+  dataUrl: "unity_build/new_build_8.data",
+  frameworkUrl: "unity_build/new_build_8.framework.js",
+  codeUrl: "unity_build/new_build_8.wasm",
   streamingAssetsUrl: "StreamingAssets"
 });
 
@@ -131,12 +131,6 @@ class SolanaBuffer {
 }
 
 export const HomeView = () => {
-  type BrickConfig = {
-    Type: number,
-    Subtype: number,
-    HasField: boolean,
-    Slots: number[],
-  }
 
   onWalletConnectedCallback = async () => {
     if (wallet === undefined) {
@@ -175,6 +169,7 @@ export const HomeView = () => {
   }
 
   type Card =  {
+    MintAddress: string,
     Metadata: CardMetadata,
     BrickTree: {
       Genesis: Brick,
@@ -374,7 +369,52 @@ export const HomeView = () => {
     }
   }
 
-  var brickConfigs: BrickConfig[] = []
+  type BrickConfig = {
+    Type: number,
+    Subtype: number,
+    HasField: boolean,
+    Slots: number,
+  }
+
+  var brickConfigs: BrickConfig[] = [
+    //Actions
+    { Type: 0, Subtype: 0, HasField: false, Slots: 0, }, //Void
+    { Type: 0, Subtype: 1, HasField: false, Slots: 2, }, //Set
+    { Type: 0, Subtype: 2, HasField: false, Slots: 3, }, //Conditional
+    { Type: 0, Subtype: 3, HasField: false, Slots: 2, }, //Loop
+    { Type: 0, Subtype: 4, HasField: true, Slots: 0, }, //Card
+    { Type: 0, Subtype: 100, HasField: false, Slots: 1, }, //MoveTo
+    { Type: 0, Subtype: 101, HasField: true, Slots: 2, }, //SetPlayerAttr
+    { Type: 0, Subtype: 102, HasField: true, Slots: 2, }, //AddPlayerAttr
+    { Type: 0, Subtype: 103, HasField: false, Slots: 3, }, //ApplyToPlace
+
+    //Conditions
+    { Type: 1, Subtype: 0, HasField: false, Slots: 0, }, //True
+    { Type: 1, Subtype: 1, HasField: false, Slots: 0, }, //False
+    { Type: 1, Subtype: 2, HasField: false, Slots: 2, }, //Or
+    { Type: 1, Subtype: 3, HasField: false, Slots: 2, }, //And
+    { Type: 1, Subtype: 4, HasField: false, Slots: 1, }, //Not
+    { Type: 1, Subtype: 5, HasField: false, Slots: 2, }, //Equal
+    { Type: 1, Subtype: 6, HasField: false, Slots: 2, }, //GreaterThan
+    { Type: 1, Subtype: 7, HasField: false, Slots: 2, }, //LesserThan
+    { Type: 1, Subtype: 100, HasField: false, Slots: 1, }, //IsAtPlace
+
+    //Values
+    { Type: 2, Subtype: 0, HasField: true, Slots: 0, }, //Const,
+    { Type: 2, Subtype: 1, HasField: false, Slots: 3, }, //Conditional
+    { Type: 2, Subtype: 2, HasField: false, Slots: 2, }, //Add
+    { Type: 2, Subtype: 3, HasField: false, Slots: 2, }, //Sub
+    { Type: 2, Subtype: 100, HasField: true, Slots: 1, }, //GetPlayerAttr
+    { Type: 2, Subtype: 101, HasField: false, Slots: 0, }, //GetPlayerIndex
+    { Type: 2, Subtype: 102, HasField: false, Slots: 1, }, //GetCardsAmount
+    { Type: 2, Subtype: 103, HasField: false, Slots: 0, }, //CurrentPlace
+    { Type: 2, Subtype: 104, HasField: false, Slots: 0, }, //GetCtxVar
+    { Type: 2, Subtype: 105, HasField: false, Slots: 0, }, //CasterPlayerIndex
+
+  ]
+  // for (var conf in brickConfigsClient.ConfigsByType.Action) {
+
+  // }
   const getBrickConfig = (type: number, subtype: number) => {
     var t = type.toString()
     var st = subtype.toString()
@@ -420,7 +460,7 @@ export const HomeView = () => {
     var slots = []
     if (config.HasField)
       intField = buffer.readu32()
-    for (let i = 0; i < config.Slots.length; i++) {
+    for (let i = 0; i < config.Slots; i++) {
       slots.push(deserializeBrick(buffer))
     }
     var result: Brick = {
@@ -434,14 +474,20 @@ export const HomeView = () => {
   }
 
   const deserializeCard = (buffer: SolanaBuffer) => {
+    console.log(buffer.buf)
     var clientMetadataSize = buffer.readu32();
+    var md = {
+      Picture: buffer.readu32(),
+      Coins: buffer.readu32(),
+      Name: buffer.readString(),
+      Description: buffer.readString(),
+    }
+    console.log('deserializeCard')
+    console.log(buffer.buf)
+    console.log(buffer.pos)
+    console.log(buffer.buf.slice(buffer.pos, buffer.buf.length))
     return {
-      Metadata: {
-        Picture: buffer.readu32(),
-        Coins: buffer.readu32(),
-        Name: buffer.readString(),
-        Description: buffer.readString(),
-      },
+      Metadata: md,  
       BrickTree: {
         Genesis: deserializeBrick(buffer), 
       },
@@ -865,6 +911,7 @@ export const HomeView = () => {
 
   const castCard = async(cardId: number) => {
     console.log('cast card')
+    console.log(cardId)
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
@@ -896,7 +943,11 @@ export const HomeView = () => {
       }
     }    
   }
-  unityContext.on("UseCard", (cardAccountKey, cardId) =>  castCard(cardId));
+  unityContext.on("UseCard", (cardId) => {
+    console.log("UseCard")
+    console.log(cardId)
+    castCard(cardId)
+  });
 
   const updateEntity = async (entityType: string, mintAccountPublicKey: PublicKey, entityData: Buffer) => { 
     if (wallet === undefined) {
@@ -1051,25 +1102,32 @@ export const HomeView = () => {
 
   unityContext.on("UpdateCard", async (cardData) =>  {
     var card: Card = JSON.parse(cardData)
-    console.log('upda')
-    console.log(card)
     var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
     serializeCard(card, sbuf)
-    await createEntity("Card").then( async () => {
-      console.log('CREATED')
-      console.log(lastEntityMintAdress)
-      var createdCardMintAdress = new PublicKey(lastEntityMintAdress)
+    console.log(card)
+    if (card.MintAddress)
+    {
+      var createdCardMintAdress = new PublicKey(card.MintAddress)
       const entityAccountPublicKey = await PublicKey.createWithSeed(
-        createdCardMintAdress!,
+        createdCardMintAdress,
         'SolceryCard',
         programId,
       );
-      console.log('CARD POINTER')
-      console.log(sbuf.getWritten())
-      await setPointerAccountData(entityAccountPublicKey!, sbuf.getWritten(), []).then( async () => {
-        await addCardToCollection(createdCardMintAdress!)
+      await setPointerAccountData(entityAccountPublicKey!, sbuf.getWritten(), [])
+    } else {
+      console.log('CREATE NEW')
+      await createEntity("Card").then( async () => {
+        var createdCardMintAdress = new PublicKey(lastEntityMintAdress)
+        const entityAccountPublicKey = await PublicKey.createWithSeed(
+          createdCardMintAdress!,
+          'SolceryCard',
+          programId,
+        );
+        await setPointerAccountData(entityAccountPublicKey!, sbuf.getWritten(), []).then( async () => {
+          await addCardToCollection(createdCardMintAdress!)
+        })
       })
-    })
+    }
   })
 
   unityContext.on("UpdateRuleset", async (data) =>  {
