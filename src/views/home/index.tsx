@@ -767,8 +767,10 @@ export const HomeView = () => {
     else {
       console.log('CREATE BOARD')
       if (wallet?.publicKey) { 
+        console.log('wallter')
         var rulesetPointerAccountInfo = await connection.getAccountInfo(rulesetPointerPublicKey)
         if (rulesetPointerAccountInfo?.data) {
+          console.log('pointer')
           var rulesetAccountKey = new PublicKey(rulesetPointerAccountInfo.data)
           var rulesetAccountInfo = await connection.getAccountInfo(rulesetAccountKey)
           if (rulesetAccountInfo?.data) {
@@ -840,9 +842,14 @@ export const HomeView = () => {
       }
     }
   }
-  unityContext.on("CreateBoard", () => {
+  unityContext.on("CreateBoard", async () => {
     var cookies = new Cookies()
-    var rulesetAccountPubkey = new PublicKey(cookies.get('ruleset'))
+    var myMintKey = new PublicKey(cookies.get('ruleset'))
+    const rulesetAccountPubkey = await PublicKey.createWithSeed(
+      new PublicKey(myMintKey),
+      'SolceryRuleset',
+      programId,
+    );
     createBoard(rulesetAccountPubkey)
   });
 
