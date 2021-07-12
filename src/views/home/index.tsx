@@ -8,6 +8,7 @@ import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-
 import { SystemProgram } from "@solana/web3.js";
 import Cookies from 'universal-cookie';
 import { SmartBuffer } from "../../utils/smartBuffer";
+import * as borsh from 'borsh';
 
 
 export function set_unity_wallet_connected(isConnected: boolean) {
@@ -43,6 +44,42 @@ const unityContext = new UnityContext({
 
 export const HomeView = () => {
 
+
+  class GreetingAccount {
+    counter = 0;
+    constructor(fields: {counter: number} | undefined = undefined) {
+      if (fields) {
+        this.counter = fields.counter;
+      }
+    }
+  }
+
+  /**
+   * Borsh schema definition for greeting accounts
+   */
+  const GreetingSchema = new Map([
+    [GreetingAccount, {kind: 'struct', fields: [['counter', 'u32']]}],
+  ]);
+
+  class Test {
+    constructor(src: { t: GreetingAccount, n: number }) {
+      this.t = src.t;
+      this.n = src.n
+    }
+    n: number;
+    t: GreetingAccount;
+  }
+
+  // const TestSchema = new Map([
+  //   [GreetingAccount, {kind: 'struct', fields: [['counter', 'u32']]}],
+  //   ['x', 51],
+  //   // [Test, { kind: 'struct', fields: [[ 't', GreetingAccount ]]}],
+  // ])
+
+
+
+
+
   onWalletConnectedCallback = async () => {
     if (wallet === undefined) {
       console.log('wallet undefined')
@@ -72,6 +109,25 @@ export const HomeView = () => {
     Slots: Brick[],
   }
 
+  class BrickNewClass {
+    constructor(src: { Type: number, Subtype: number, Slots: BrickNewClass[]}) {
+      this.Type = src.Type
+      this.Subtype = src.Subtype
+      this.Slots = src.Slots
+    }
+    Type: number;
+    Subtype: number;
+    Slots: BrickNewClass[];
+
+    borshSerialize(writer: any) {
+      
+    }
+  }
+
+  const  TestSchema = new Map()
+  TestSchema.set(BrickNewClass, { kind: 'struct', fields : [[ 'Type', 'u32' ], [ 'Subtype', 'u32'], [ 'Slots', [ BrickNewClass ] ]] })
+
+
   type CardMetadata = {
     Picture: number,
     Coins: number,
@@ -79,11 +135,37 @@ export const HomeView = () => {
     Description: string,
   }
 
+  class CardMetadataNewClass {
+    picture: number;
+    coins: number;
+    name: string;
+    description: string;
+    constructor(src: { picture: number, coins: number, name: string, description: string }) {
+      this.picture = src.picture
+      this.coins = src.coins
+      this.name = src.name
+      this.description = src.description
+    }
+  }
+
   type Card =  {
     MintAddress: string,
     Metadata: CardMetadata,
     BrickTree: {
       Genesis: Brick,
+    }
+  }
+
+  
+
+  class CardNewClass {
+    id: number;
+    metadata: CardMetadataNewClass
+    brick: BrickNewClass;
+    constructor(src: { id: number, metadata: CardMetadataNewClass, brick: BrickNewClass }) {
+      this.id = src.id
+      this.metadata = src.metadata
+      this.brick = src.brick
     }
   }
 
@@ -114,6 +196,25 @@ export const HomeView = () => {
     }
   }
 
+  class RulesetNewClass {
+    cards: CardNewClass[];
+    placeInfos: PlaceInfo[];
+  }
+
+  class PlaceInfo {
+    placeId: number;
+    cards: PlaceCard[];
+    constructor(src: { placeId: number, cards: PlaceCard[] })
+  }
+
+  class PlaceCard {
+    cardTypeId: number;
+    amount: number;
+    constructor(src: { cardTypeId: number, amount: number }) {
+      this.cardTypeId = src.cardTypeId
+      this.amount = src.amount
+    }
+  }
 
   type Collection = {
     CardTypes: {
@@ -134,9 +235,7 @@ export const HomeView = () => {
   }
 
   const getRuleset = async () => {
-    console.log('GET RULESET')
     var cookies = new Cookies()
-    console.log('ruleset adress ' + cookies.get('ruleset'))
     const rulesetPointerKey = await PublicKey.createWithSeed(
       new PublicKey(cookies.get('ruleset')), //card key
       'SolceryRuleset',
@@ -1041,7 +1140,8 @@ export const HomeView = () => {
   })
 
   return (
-    <Unity tabIndex={3} style={{ width: '100%', height: '100%' }} unityContext={unityContext} />
+    <div> </div>
+    // <Unity tabIndex={3} style={{ width: '100%', height: '100%' }} unityContext={ unityContext} />
   );
  
 };
