@@ -88,6 +88,17 @@
         "Slots": []
       },
       {
+        "Name": "Show message",
+        "Type": 0,
+        "Subtype": 5,
+        "Description": "Shows message",
+        "HasField": true,
+        "FieldType": 1,
+        "FieldName": "Message",
+        "HasObjectSelection": false,
+        "Slots": []
+      },
+      {
         "Name": "MoveTo",
         "Type": 0,
         "Subtype": 100,

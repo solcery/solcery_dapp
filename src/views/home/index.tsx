@@ -93,6 +93,16 @@ class SolanaBuffer {
     this.buf.writeUInt32LE(number, this.pos);
     this.pos += 4;
   }
+
+  readi32() {
+    this.pos += 4;
+    return this.buf.readInt32LE(this.pos - 4);;
+  }
+  writei32(number: number) {
+    this.buf.writeInt32LE(number, this.pos);
+    this.pos += 4;
+  }
+
   readPublicKey() {
     this.pos += 32;
     return new PublicKey(this.buf.subarray(this.pos - 32, this.pos));
@@ -158,6 +168,7 @@ export const HomeView = () => {
     Subtype: number,
     HasField: boolean,
     IntField: number,
+    StringField: string | null,
     Slots: Brick[],
   }
 
@@ -376,44 +387,45 @@ export const HomeView = () => {
   type BrickConfig = {
     Type: number,
     Subtype: number,
-    HasField: boolean,
+    FieldType: number, //0 = None, 1 - int, 2 - string
     Slots: number,
   }
 
   var brickConfigs: BrickConfig[] = [
     //Actions
-    { Type: 0, Subtype: 0, HasField: false, Slots: 0, }, //Void
-    { Type: 0, Subtype: 1, HasField: false, Slots: 2, }, //Set
-    { Type: 0, Subtype: 2, HasField: false, Slots: 3, }, //Conditional
-    { Type: 0, Subtype: 3, HasField: false, Slots: 2, }, //Loop
-    { Type: 0, Subtype: 4, HasField: true, Slots: 0, }, //Card
-    { Type: 0, Subtype: 100, HasField: false, Slots: 1, }, //MoveTo
-    { Type: 0, Subtype: 101, HasField: true, Slots: 2, }, //SetPlayerAttr
-    { Type: 0, Subtype: 102, HasField: true, Slots: 2, }, //AddPlayerAttr
-    { Type: 0, Subtype: 103, HasField: false, Slots: 3, }, //ApplyToPlace
+    { Type: 0, Subtype: 0, FieldType: 0, Slots: 0, }, //Void
+    { Type: 0, Subtype: 1, FieldType: 0, Slots: 2, }, //Set
+    { Type: 0, Subtype: 2, FieldType: 0, Slots: 3, }, //Conditional
+    { Type: 0, Subtype: 3, FieldType: 0, Slots: 2, }, //Loop
+    { Type: 0, Subtype: 4, FieldType: 1, Slots: 0, }, //Card
+    { Type: 0, Subtype: 5, FieldType: 2, Slots: 0, }, //Show message
+    { Type: 0, Subtype: 100, FieldType: 0, Slots: 1, }, //MoveTo
+    { Type: 0, Subtype: 101, FieldType: 1, Slots: 2, }, //SetPlayerAttr
+    { Type: 0, Subtype: 102, FieldType: 1, Slots: 2, }, //AddPlayerAttr
+    { Type: 0, Subtype: 103, FieldType: 0, Slots: 3, }, //ApplyToPlace
 
     //Conditions
-    { Type: 1, Subtype: 0, HasField: false, Slots: 0, }, //True
-    { Type: 1, Subtype: 1, HasField: false, Slots: 0, }, //False
-    { Type: 1, Subtype: 2, HasField: false, Slots: 2, }, //Or
-    { Type: 1, Subtype: 3, HasField: false, Slots: 2, }, //And
-    { Type: 1, Subtype: 4, HasField: false, Slots: 1, }, //Not
-    { Type: 1, Subtype: 5, HasField: false, Slots: 2, }, //Equal
-    { Type: 1, Subtype: 6, HasField: false, Slots: 2, }, //GreaterThan
-    { Type: 1, Subtype: 7, HasField: false, Slots: 2, }, //LesserThan
-    { Type: 1, Subtype: 100, HasField: false, Slots: 1, }, //IsAtPlace
+    { Type: 1, Subtype: 0, FieldType: 0, Slots: 0, }, //True
+    { Type: 1, Subtype: 1, FieldType: 0, Slots: 0, }, //False
+    { Type: 1, Subtype: 2, FieldType: 0, Slots: 2, }, //Or
+    { Type: 1, Subtype: 3, FieldType: 0, Slots: 2, }, //And
+    { Type: 1, Subtype: 4, FieldType: 0, Slots: 1, }, //Not
+    { Type: 1, Subtype: 5, FieldType: 0, Slots: 2, }, //Equal
+    { Type: 1, Subtype: 6, FieldType: 0, Slots: 2, }, //GreaterThan
+    { Type: 1, Subtype: 7, FieldType: 0, Slots: 2, }, //LesserThan
+    { Type: 1, Subtype: 100, FieldType: 0, Slots: 1, }, //IsAtPlace
 
     //Values
-    { Type: 2, Subtype: 0, HasField: true, Slots: 0, }, //Const,
-    { Type: 2, Subtype: 1, HasField: false, Slots: 3, }, //Conditional
-    { Type: 2, Subtype: 2, HasField: false, Slots: 2, }, //Add
-    { Type: 2, Subtype: 3, HasField: false, Slots: 2, }, //Sub
-    { Type: 2, Subtype: 100, HasField: true, Slots: 1, }, //GetPlayerAttr
-    { Type: 2, Subtype: 101, HasField: false, Slots: 0, }, //GetPlayerIndex
-    { Type: 2, Subtype: 102, HasField: false, Slots: 1, }, //GetCardsAmount
-    { Type: 2, Subtype: 103, HasField: false, Slots: 0, }, //CurrentPlace
-    { Type: 2, Subtype: 104, HasField: false, Slots: 0, }, //GetCtxVar
-    { Type: 2, Subtype: 105, HasField: false, Slots: 0, }, //CasterPlayerIndex
+    { Type: 2, Subtype: 0, FieldType: 1, Slots: 0, }, //Const,
+    { Type: 2, Subtype: 1, FieldType: 0, Slots: 3, }, //Conditional
+    { Type: 2, Subtype: 2, FieldType: 0, Slots: 2, }, //Add
+    { Type: 2, Subtype: 3, FieldType: 0, Slots: 2, }, //Sub
+    { Type: 2, Subtype: 100, FieldType: 1, Slots: 1, }, //GetPlayerAttr
+    { Type: 2, Subtype: 101, FieldType: 0, Slots: 0, }, //GetPlayerIndex
+    { Type: 2, Subtype: 102, FieldType: 0, Slots: 1, }, //GetCardsAmount
+    { Type: 2, Subtype: 103, FieldType: 0, Slots: 0, }, //CurrentPlace
+    { Type: 2, Subtype: 104, FieldType: 0, Slots: 0, }, //GetCtxVar
+    { Type: 2, Subtype: 105, FieldType: 0, Slots: 0, }, //CasterPlayerIndex
 
   ]
   // for (var conf in brickConfigsClient.ConfigsByType.Action) {
@@ -429,20 +441,50 @@ export const HomeView = () => {
     return {
       Type: type,
       Subtype: subtype,
-      HasField: false,
+      FieldType: 0,
       Slots: [],
     }
   }
 
+
   const serializeBrick = (brick: Brick, buffer: SolanaBuffer) => {
     buffer.writeu32(brick.Type)
     buffer.writeu32(brick.Subtype)
-    if (brick.HasField) {
-      buffer.writeu32(brick.IntField)
+    if (brick.HasField && !brick.StringField) {
+      buffer.writei32(brick.IntField)
+    }
+    if (brick.HasField && brick.StringField) {
+      buffer.writeString(brick.StringField)
     }
     brick.Slots.forEach((slot) => {
       serializeBrick(slot, buffer)
     })
+  }
+
+
+  const deserializeBrick = (buffer: SolanaBuffer) => {
+    var type = buffer.readu32()
+    var subtype = buffer.readu32()
+    var config = getBrickConfig(type, subtype)
+    var intField = 0
+    var stringField = null
+    var slots = []
+    if (config.FieldType == 1)
+      intField = buffer.readi32()
+    if (config.FieldType == 2)
+      stringField = buffer.readString()
+    for (let i = 0; i < config.Slots; i++) {
+      slots.push(deserializeBrick(buffer))
+    }
+    var result: Brick = {
+      Type: type,
+      Subtype: subtype,
+      HasField: config.FieldType == 1 || config.FieldType == 2,
+      IntField: intField,
+      StringField: stringField,
+      Slots: slots,
+    }
+    return result
   }
 
   const serializeCard = (card: Card, buffer: SolanaBuffer) => {
@@ -456,27 +498,6 @@ export const HomeView = () => {
 
   }
 
-  const deserializeBrick = (buffer: SolanaBuffer) => {
-    var type = buffer.readu32()
-    var subtype = buffer.readu32()
-    var config = getBrickConfig(type, subtype)
-    var intField = 0
-    var slots = []
-    if (config.HasField)
-      intField = buffer.readu32()
-    for (let i = 0; i < config.Slots; i++) {
-      slots.push(deserializeBrick(buffer))
-    }
-    var result: Brick = {
-      Type: type,
-      Subtype: subtype,
-      HasField: config.HasField,
-      IntField: intField,
-      Slots: slots,
-    }
-    return result
-  }
-
   const deserializeCard = (buffer: SolanaBuffer) => {
     console.log(buffer.buf)
     var clientMetadataSize = buffer.readu32();
@@ -486,10 +507,6 @@ export const HomeView = () => {
       Name: buffer.readString(),
       Description: buffer.readString(),
     }
-    console.log('deserializeCard')
-    console.log(buffer.buf)
-    console.log(buffer.pos)
-    console.log(buffer.buf.slice(buffer.pos, buffer.buf.length))
     return {
       Metadata: md,  
       BrickTree: {
@@ -527,7 +544,6 @@ export const HomeView = () => {
         if (accInfo?.data) {
           var buf = Buffer.from(accInfo?.data);
           var boardData = await serializeBoardData(buf);
-          console.log(boardData)
           console.log(JSON.stringify(boardData))
           unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(boardData));            
         }
@@ -536,12 +552,10 @@ export const HomeView = () => {
 
   const serializeBoardData = async (buf: Buffer) => {
     if (wallet?.publicKey) {
-      console.log("GET BOT DATA")
       var playersArray = [];
       var cardsArray = [];
       var cardTypes = [];
       var buffer = new SolanaBuffer(buf);
-      console.log(buffer.buf)
       var players = buffer.readu32()
       for (let i = 0; i < players; i++) {
         var address = buffer.readPublicKey(); 
@@ -572,11 +586,20 @@ export const HomeView = () => {
           CardPlace: buffer.readu32(),
         });
       }
+      var messageNonce = buffer.readu32()
+      var messageLen = buffer.readu32()
+      var messageBuffer = buffer.readBuffer(128).slice(0, messageLen)
+      var message = messageBuffer.toString('utf8')
       return {
         Players: playersArray,
         Cards: cardsArray,
         CardTypes: cardTypes,
-        EndTurnCardId: 0,
+        Message: {
+          Nonce: messageNonce,
+          Message: message,
+          Duration: 5,
+        },
+        EndTurnCardId: 1,
       }
     }
   }
