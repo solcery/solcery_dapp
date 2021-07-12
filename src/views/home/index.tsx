@@ -50,6 +50,7 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
   return buf
 }
 
+var lastMessageNonce = 0;
 
 const unityContext = new UnityContext({
   loaderUrl: "unity_build/new_build_8.loader.js",
@@ -148,14 +149,16 @@ export const HomeView = () => {
     }
     else {
       if (wallet?.publicKey) { 
-        updateCollection()
-
-        const collectionPublicKey = await PublicKey.createWithSeed(
-          wallet.publicKey, //card key
-          'SolceryCollection',
-          programId,
-        );
-        connection.onAccountChange(collectionPublicKey, updateCollection)
+        await updateCollection().then(async () => {
+          var cookies = new Cookies()
+          var myStringKey = cookies.get('ruleset')
+          const collectionPublicKey = await PublicKey.createWithSeed(
+            new PublicKey(myStringKey),
+            'SolceryCollection',
+            programId,
+          );
+          connection.onAccountChange(collectionPublicKey, updateCollection)
+        })
       }
     }
 
@@ -544,6 +547,17 @@ export const HomeView = () => {
         if (accInfo?.data) {
           var buf = Buffer.from(accInfo?.data);
           var boardData = await serializeBoardData(buf);
+          if (boardData) {
+            if (boardData.Message.Nonce != lastMessageNonce) {
+              console.log(boardData.Message.Nonce)
+              console.log(lastMessageNonce)
+              notify({
+                message: "Message",
+                description: boardData.Message.Message,
+              });
+              lastMessageNonce = boardData.Message.Nonce
+            }
+          }
           console.log(JSON.stringify(boardData))
           unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(boardData));            
         }
@@ -931,6 +945,7 @@ export const HomeView = () => {
   var lastEntityMintAdress = '';
   var lastEntityAccount: Account[]
 
+
   var programId = new PublicKey("5Ds6QvdZAqwVozdu2i6qzjXm8tmBttV6uHNg4YU8rB1P");
 
   unityContext.on("LogToConsole", (message) => {
@@ -986,36 +1001,6 @@ export const HomeView = () => {
   unityContext.on("UseCard", (cardId) => {
     castCard(cardId)
   });
-
-  const updateEntity = async (entityType: string, mintAccountPublicKey: PublicKey, entityData: Buffer) => { 
-    if (wallet === undefined) {
-      console.log('wallet undefined')
-    }
-    else {
-      if (wallet?.publicKey) {
-        var instructions: TransactionInstruction[] = []
-        var accounts: Account[] = [];
-        const entityAccountPublicKey = await PublicKey.createWithSeed(
-          mintAccountPublicKey,
-          'Solcery' + entityType,
-          programId,
-        );
-
-        setPointerAccountData(entityAccountPublicKey, entityData, accounts)
-
-        sendTransaction(connection, wallet, instructions, accounts, true,
-          () => set_unity_card_creation_signed("cardName", true),
-          () => set_unity_card_creation_signed("cardName", false)
-        ).then(async () => {
-          set_unity_card_creation_confirmed("cardName", true);
-          notify({
-            message: "Card updated",
-            description: "Created updated " + entityAccountPublicKey.toBase58(),
-          });
-        });
-      }
-    }
-  };
 
   const setPointerAccountData = async (pointerAccountPublicKey: PublicKey, data: Buffer, accounts: Account[]) => {
     if (wallet?.publicKey) {
@@ -1154,7 +1139,13 @@ export const HomeView = () => {
         'SolceryCard',
         programId,
       );
-      await setPointerAccountData(entityAccountPublicKey!, sbuf.getWritten(), [])
+      await setPointerAccountData(entityAccountPublicKey!, sbuf.getWritten(), []).then(() => {
+        notify({
+          message: "Card updated",
+          description: "Card updated",
+        });
+        set_unity_card_creation_confirmed(card.Metadata.Name, true);
+      })
     } else {
       console.log('CREATE NEW')
       await createEntity(["Card"]).then( async () => {
@@ -1166,13 +1157,17 @@ export const HomeView = () => {
         );
         await setPointerAccountData(entityAccountPublicKey!, sbuf.getWritten(), []).then( async () => {
           await addCardToCollection(createdCardMintAdress!)
+          notify({
+            message: "Card created",
+            description: "Card created",
+          });
+          set_unity_card_creation_confirmed(card.Metadata.Name, true);
         })
       })
     }
   })
 
   unityContext.on("UpdateRuleset", async (data) =>  {
-    console.log('UPDATE RULESET')
     var ruleset: Ruleset = JSON.parse(data)
     var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
     serializeRuleset(ruleset, sbuf)
@@ -1184,7 +1179,10 @@ export const HomeView = () => {
       programId,
     );
     await setPointerAccountData(rulesetPublicKey, sbuf.getWritten(), []).then( async () => {
-      console.log('ruleset added')
+      notify({
+        message: "Ruleset saved",
+        description: "Ruleset saved",
+      });
     })
     // var sbuf = new SolanaBuffer(buf)
     // await createEntity("Card").then( async () => {
