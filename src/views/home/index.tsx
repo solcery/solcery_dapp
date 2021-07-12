@@ -1,26 +1,16 @@
-import { Button, Col, Row } from "antd";
-import React, { useEffect } from "react";
-import { Link } from "react-router-dom";
-import { ConnectButton } from "../../components/ConnectButton";
-import { TokenIcon } from "../../components/TokenIcon";
 import { useConnectionConfig, sendTransaction, useConnection } from "../../contexts/connection";
-import { useMarkets } from "../../contexts/market";
-import { useUserBalance, useUserTotalBalance } from "../../hooks";
-import { WRAPPED_SOL_MINT } from "../../utils/ids";
-import { formatUSD } from "../../utils/utils";
 import { notify } from "../../utils/notifications";
 import { useWallet, WalletAdapter } from "../../contexts/wallet";
-import { Account, Connection, Transaction, TransactionInstruction, TransactionCtorFields, PublicKey, sendAndConfirmTransaction } from "@solana/web3.js";
+import { Account, Connection, Transaction, TransactionInstruction, PublicKey } from "@solana/web3.js";
 import { createUninitializedMint, createTokenAccount } from "../../actions/account"
 import Unity, { UnityContext } from "react-unity-webgl";
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { SystemProgram, TransferParams } from "@solana/web3.js";
+import { SystemProgram } from "@solana/web3.js";
 import Cookies from 'universal-cookie';
+import { SmartBuffer } from "../../utils/smartBuffer";
 
-import bs58 from 'bs58';
 
 export function set_unity_wallet_connected(isConnected: boolean) {
-  console.log('home connected');
   var data = { IsConnected: isConnected };
   unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
 }
@@ -41,16 +31,6 @@ export async function onWalletConnected() {
   onWalletConnectedCallback()
 }
 
-const joinedBufferToBuffer = function (joinedBuffer: string) {
-  var strBytesArray = joinedBuffer.split('|');
-  var buf = Buffer.allocUnsafe(strBytesArray.length );
-  for (var i = 0; i < strBytesArray.length; i++) {
-    buf.writeUInt8(parseInt(strBytesArray[i]), i);
-  }
-  return buf
-}
-
-
 const unityContext = new UnityContext({
   loaderUrl: "unity_build/new_build_8.loader.js",
   dataUrl: "unity_build/new_build_8.data",
@@ -59,76 +39,7 @@ const unityContext = new UnityContext({
   streamingAssetsUrl: "StreamingAssets"
 });
 
-class SolanaBuffer {
-  pos: number;
-  buf: Buffer;
-  constructor(buf: Buffer) {
-    this.pos = 0;
-    this.buf = buf;
-  }
 
-  read8() {
-    this.pos += 1;
-    return this.buf.readUInt8(this.pos - 1);
-  }
-  write8(number: number ) {
-    this.buf.writeUInt8(number, this.pos);
-    this.pos += 1;
-  }
-
-  readBool() {
-    this.pos += 1;
-    return this.buf.readUInt8(this.pos - 1) == 1 ? true : false;
-  }
-  writeBool(value: boolean ) {
-    this.buf.writeUInt8(value ? 1 : 0, this.pos);
-    this.pos += 1;
-  }
-
-  readu32() {
-    this.pos += 4;
-    return this.buf.readUInt32LE(this.pos - 4);;
-  }
-  writeu32(number: number) {
-    this.buf.writeUInt32LE(number, this.pos);
-    this.pos += 4;
-  }
-  readPublicKey() {
-    this.pos += 32;
-    return new PublicKey(this.buf.subarray(this.pos - 32, this.pos));
-  }
-  writePublicKey(key: PublicKey) {
-    this.writeBuffer(key.toBuffer())
-  }
-
-  readBuffer(len: number) {
-    this.pos += len;
-    return this.buf.slice(this.pos - len, this.pos)
-  }
-  writeBuffer(buf: Buffer) {
-    for (let i = 0; i < buf.length; i++) {
-      this.write8(buf[i])
-    }
-  }
-
-  readString() {
-    var len = this.readu32();
-    this.pos += len;
-    return this.buf.toString("utf8", this.pos - len, this.pos);
-  }
-  writeString(str: string) {
-    this.writeu32(str.length)
-    this.writeBuffer(Buffer.from(str, 'utf8'))
-  }
-
-  skip(number: number) {
-    this.pos += number;
-  }
-
-  getWritten() {
-    return this.buf.slice(0, this.pos)
-  }
-}
 
 export const HomeView = () => {
 
@@ -215,7 +126,7 @@ export const HomeView = () => {
     RulesetData: Ruleset,
   }
 
-  const serializeCollection = (collection: Collection, sbuf: SolanaBuffer) => {
+  const serializeCollection = (collection: Collection, sbuf: SmartBuffer) => {
     sbuf.writeu32(collection.CardTypes.length)
     collection.CardTypes.forEach((cardData) => {
       sbuf.writePublicKey(new PublicKey(cardData.MintAddress))
@@ -235,12 +146,12 @@ export const HomeView = () => {
     console.log(rulesetPointerInfo?.data)
     var rulesetAccountKey = new PublicKey(rulesetPointerInfo?.data!)
     var rulesetAccountInfo = await connection.getAccountInfo(rulesetAccountKey)
-    var ruleset = deserializeRuleset(new SolanaBuffer(rulesetAccountInfo?.data!))
+    var ruleset = deserializeRuleset(new SmartBuffer(rulesetAccountInfo?.data!))
     console.log(ruleset)
     return ruleset;
   }
 
-  const deserializeCollection = async (sbuf: SolanaBuffer) => {
+  const deserializeCollection = async (sbuf: SmartBuffer) => {
     console.log('deserializeCollection')
     console.log(sbuf.buf)
     var cardTypes: {
@@ -262,7 +173,7 @@ export const HomeView = () => {
         var accInfo = await connection.getAccountInfo(cardLinkAccountPublicKey);
         var cardAccInfo = await connection.getAccountInfo(new PublicKey(accInfo?.data!));
         console.log(cardAccInfo?.data)
-        var card = deserializeCard(new SolanaBuffer(cardAccInfo?.data!))
+        var card = deserializeCard(new SmartBuffer(cardAccInfo?.data!))
         cardTypes.push({
           MintAddress: mintAccountPublicKey.toBase58(),
           Metadata: card.Metadata,
@@ -294,7 +205,7 @@ export const HomeView = () => {
     return result
   }
 
-  const serializeRuleset = (ruleset: Ruleset, sbuf: SolanaBuffer) => {
+  const serializeRuleset = (ruleset: Ruleset, sbuf: SmartBuffer) => {
     console.log("serializeRuleset")
     console.log(ruleset)
     sbuf.writeu32(ruleset.CardMintAddresses.length)
@@ -323,7 +234,7 @@ export const HomeView = () => {
     })
   }
 
-  const deserializeRuleset = (sbuf: SolanaBuffer) => {
+  const deserializeRuleset = (sbuf: SmartBuffer) => {
     var CardMintAddresses = []
     var cardTypesAmount = sbuf.readu32()
     for (let i = 0; i < cardTypesAmount; i++) {
@@ -434,7 +345,7 @@ export const HomeView = () => {
     }
   }
 
-  const serializeBrick = (brick: Brick, buffer: SolanaBuffer) => {
+  const serializeBrick = (brick: Brick, buffer: SmartBuffer) => {
     buffer.writeu32(brick.Type)
     buffer.writeu32(brick.Subtype)
     if (brick.HasField) {
@@ -445,7 +356,7 @@ export const HomeView = () => {
     })
   }
 
-  const serializeCard = (card: Card, buffer: SolanaBuffer) => {
+  const serializeCard = (card: Card, buffer: SmartBuffer) => {
     var clientMetadataSize = 16 + card.Metadata.Name.length + card.Metadata.Description.length
     buffer.writeu32(clientMetadataSize)
     buffer.writeu32(card.Metadata.Picture)
@@ -456,7 +367,7 @@ export const HomeView = () => {
 
   }
 
-  const deserializeBrick = (buffer: SolanaBuffer) => {
+  const deserializeBrick = (buffer: SmartBuffer) => {
     var type = buffer.readu32()
     var subtype = buffer.readu32()
     var config = getBrickConfig(type, subtype)
@@ -477,7 +388,7 @@ export const HomeView = () => {
     return result
   }
 
-  const deserializeCard = (buffer: SolanaBuffer) => {
+  const deserializeCard = (buffer: SmartBuffer) => {
     console.log(buffer.buf)
     var clientMetadataSize = buffer.readu32();
     var md = {
@@ -486,10 +397,6 @@ export const HomeView = () => {
       Name: buffer.readString(),
       Description: buffer.readString(),
     }
-    console.log('deserializeCard')
-    console.log(buffer.buf)
-    console.log(buffer.pos)
-    console.log(buffer.buf.slice(buffer.pos, buffer.buf.length))
     return {
       Metadata: md,  
       BrickTree: {
@@ -510,7 +417,7 @@ export const HomeView = () => {
       }
     }
     var clientMetadataSize = cardData.readUInt32LE(0);
-    var buffer = new SolanaBuffer(cardData.slice(4, 4 + clientMetadataSize));
+    var buffer = new SmartBuffer(cardData.slice(4, 4 + clientMetadataSize));
     return {
       Picture: buffer.readu32(),
       Coins: buffer.readu32(),
@@ -527,8 +434,6 @@ export const HomeView = () => {
         if (accInfo?.data) {
           var buf = Buffer.from(accInfo?.data);
           var boardData = await serializeBoardData(buf);
-          console.log(boardData)
-          console.log(JSON.stringify(boardData))
           unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(boardData));            
         }
       }
@@ -536,12 +441,10 @@ export const HomeView = () => {
 
   const serializeBoardData = async (buf: Buffer) => {
     if (wallet?.publicKey) {
-      console.log("GET BOT DATA")
       var playersArray = [];
       var cardsArray = [];
       var cardTypes = [];
-      var buffer = new SolanaBuffer(buf);
-      console.log(buffer.buf)
+      var buffer = new SmartBuffer(buf);
       var players = buffer.readu32()
       for (let i = 0; i < players; i++) {
         var address = buffer.readPublicKey(); 
@@ -597,7 +500,7 @@ export const HomeView = () => {
               programId,
             );
           var collectionSize = collection.CardTypes.length + 1
-          var sbuf = new SolanaBuffer(Buffer.allocUnsafe(4 + collectionSize * 32))
+          var sbuf = new SmartBuffer(Buffer.allocUnsafe(4 + collectionSize * 32))
           sbuf.writeu32(collectionSize)
           collection.CardTypes.forEach((cardData) => {
             sbuf.writePublicKey(new PublicKey(cardData.MintAddress))
@@ -618,13 +521,8 @@ export const HomeView = () => {
         var cookies = new Cookies();
         var accounts: Account[] = [];
         var cookies = new Cookies();
-        console.log("accounts length: " + accounts.length)
         await createEntity(["Ruleset", "Collection"]).then( async () => {
           if (wallet?.publicKey) {
-            console.log("accounts length: " + accounts.length)
-            for (let i = 0; i < accounts.length; i++) {
-              console.log(accounts[i].toString())
-            }
             var lastEntityKey = new PublicKey(lastEntityMintAdress)
             const rulesetAccountPubkey = await PublicKey.createWithSeed(
               lastEntityKey, //card key
@@ -636,15 +534,11 @@ export const HomeView = () => {
               'SolceryCollection',
               programId,
             );
-            console.log('CREATED mint key: ', lastEntityKey)
-            console.log('COLLECTION key: ', collectionPublicKey.toBase58())
-            console.log('RULESET key: ', rulesetAccountPubkey.toBase58())
             var rulesetJson = '{"CardMintAddresses":[],"Deck":[{"PlaceId" : 0, "IndexAmount":[]}],"DisplayData":{"PlayerDisplayDatas":[]}}'
             var ruleset: Ruleset = JSON.parse(rulesetJson)
-            var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
+            var sbuf = new SmartBuffer(Buffer.allocUnsafe(2000))
             serializeRuleset(ruleset, sbuf)
             await setPointerAccountData(rulesetAccountPubkey!, sbuf.getWritten(), [])
-            cookies.set('ruleset', lastEntityKey.toBase58())
             var instructions: TransactionInstruction[] = []
 
             var collectionAccount = new Account();
@@ -682,7 +576,7 @@ export const HomeView = () => {
               var accInfo = await connection.getAccountInfo(new PublicKey(collectionPublicKey));
               var collectionDataPubkey = new PublicKey(accInfo?.data!)
               var collectionData = await connection.getAccountInfo(collectionDataPubkey)
-              collection = await deserializeCollection(new SolanaBuffer(collectionData?.data!))
+              collection = await deserializeCollection(new SmartBuffer(collectionData?.data!))
               connection.onAccountChange(collectionPublicKey, updateCollection)
               unityContext.send("ReactToUnity", "UpdateCollection", JSON.stringify(collection))
             });
@@ -701,9 +595,7 @@ export const HomeView = () => {
       if (wallet?.publicKey) { 
         var cookies = new Cookies();
         var myStringKey = cookies.get('ruleset')
-        console.log(myStringKey)
         if (myStringKey === undefined) {
-          console.log('no my key')
           createCollection()
           return
         }
@@ -714,21 +606,15 @@ export const HomeView = () => {
           programId,
         );
         var accInfo = await connection.getAccountInfo(collectionPublicKey);
-        console.log('myMintKey: ' + myStringKey)
-        console.log('collection public key: ' + collectionPublicKey.toBase58())
         if (accInfo?.data!) {
-          console.log('account exist')
           var collectionDataPubkey = new PublicKey(accInfo?.data!)
           var collectionData = await connection.getAccountInfo(collectionDataPubkey)
-          var collection = await deserializeCollection(new SolanaBuffer(collectionData?.data!))
+          var collection = await deserializeCollection(new SmartBuffer(collectionData?.data!))
           collection.RulesetData = await getRuleset()
-          console.log('Unity update collection')
-          console.log(JSON.stringify(collection))
           unityContext.send("ReactToUnity", "UpdateCollection", JSON.stringify(collection))
           return collection
         } 
         else {
-          console.log('no collection')
           createCollection()
         }
       } 
@@ -777,7 +663,7 @@ export const HomeView = () => {
             console.log('EVERYTHING GOOD')
 
             var data = rulesetAccountInfo.data;
-            var ruleset: Ruleset = deserializeRuleset(new SolanaBuffer(data));
+            var ruleset: Ruleset = deserializeRuleset(new SmartBuffer(data));
             var boardAccount = new Account()
             var accounts: Account[] = [];
             var createBoardAccountIx = SystemProgram.createAccount({
@@ -895,12 +781,6 @@ export const HomeView = () => {
   unityContext.on("JoinBoard", (boardAccountKey) => joinBoard(boardAccountKey));
 
   var connection = useConnection();
-  const { marketEmitter, midPriceInUSD } = useMarkets();
-  const { tokenMap } = useConnectionConfig();
-  const SRM_ADDRESS = 'SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt';
-  const SRM = useUserBalance(SRM_ADDRESS);
-  const SOL = useUserBalance(WRAPPED_SOL_MINT);
-  const { balanceInUSD: totalBalanceInUSD } = useUserTotalBalance();
   const { wallet, connected, connect, select, provider } = useWallet();
   var connection = useConnection();
   var collection: Collection;
@@ -1120,9 +1000,8 @@ export const HomeView = () => {
 
   unityContext.on("UpdateCard", async (cardData) =>  {
     var card: Card = JSON.parse(cardData)
-    var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
+    var sbuf = new SmartBuffer(Buffer.allocUnsafe(2000))
     serializeCard(card, sbuf)
-    console.log(card)
     if (card.MintAddress)
     {
       var createdCardMintAdress = new PublicKey(card.MintAddress)
@@ -1133,7 +1012,6 @@ export const HomeView = () => {
       );
       await setPointerAccountData(entityAccountPublicKey!, sbuf.getWritten(), [])
     } else {
-      console.log('CREATE NEW')
       await createEntity(["Card"]).then( async () => {
         var createdCardMintAdress = new PublicKey(lastEntityMintAdress)
         const entityAccountPublicKey = await PublicKey.createWithSeed(
@@ -1149,9 +1027,8 @@ export const HomeView = () => {
   })
 
   unityContext.on("UpdateRuleset", async (data) =>  {
-    console.log('UPDATE RULESET')
     var ruleset: Ruleset = JSON.parse(data)
-    var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
+    var sbuf = new SmartBuffer(Buffer.allocUnsafe(2000))
     serializeRuleset(ruleset, sbuf)
     var cookies = new Cookies()
     var mainMintKey = new PublicKey(cookies.get('ruleset'))
@@ -1160,167 +1037,11 @@ export const HomeView = () => {
       'SolceryRuleset',
       programId,
     );
-    await setPointerAccountData(rulesetPublicKey, sbuf.getWritten(), []).then( async () => {
-      console.log('ruleset added')
-    })
-    // var sbuf = new SolanaBuffer(buf)
-    // await createEntity("Card").then( async () => {
-    //   console.log('CREATED')
-    //   console.log(lastEntityMintAdress)
-    //   var createdCardMintAdress = new PublicKey(lastEntityMintAdress)
-    //   const entityAccountPublicKey = await PublicKey.createWithSeed(
-    //     createdCardMintAdress!,
-    //     'SolceryCard',
-    //     programId,
-    //   );
-    //   await setPointerAccountData(entityAccountPublicKey!, sbuf.buf, []).then( async () => {
-    //     console.log('pointer setEEEE')
-    //     await addCardToCollection(createdCardMintAdress!)
-    //   })
-    // })
+    await setPointerAccountData(rulesetPublicKey, sbuf.getWritten(), [])
   })
 
-  // unityContext.on("UpdateCard", async (cardData) =>  {
-  //   var card: Card = JSON.parse(cardData)
-  //   var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
-  //   serializeCard(card, sbuf)
-  //   await createEntity("Card").then( async () => {
-  //     var createdCardMintAdress = new PublicKey(lastEntityMintAdress)
-  //     const entityAccountPublicKey = await PublicKey.createWithSeed(
-  //       createdCardMintAdress!,
-  //       'SolceryCard',
-  //       programId,
-  //     );
-  //     setPointerAccountData(entityAccountPublicKey!, sbuf.getWritten(), [])
-  //   })
-  // })
-
-  const testButton = async () => {
-    // var testTree: Card = {
-    //   Metadata: {
-    //     Picture: 53, 
-    //     Coins: 21,
-    //     Name: "Some card",
-    //     Description: "Some good card",
-    //   },
-    //   BrickData: {
-    //     Type: 0,
-    //     Subtype: 0,
-    //     HasField: false,
-    //     IntField: 0,
-    //     Slots: []
-    //   }
-    // }
-
-    // var testRuleset: Ruleset = {
-    //   CardMintAddresses: [
-    //       '5Ds6QvdZAqwVozdu2i6qzjXm8tmBttV6uHNg4YU8rB1P', '5Ds6QvdZAqwVozdu2i6qzjXm8tmBttV6uHNg4YU8rB1P'
-    //   ],
-    //   Deck: [
-    //     {
-    //         IndexAmount: [
-    //             { CardId: 0, Amount: 5 }, // index: id
-    //             { CardId: 2, Amount: 5 }, // index: id
-    //         ],
-    //     }
-    //   ],
-    //   DisplayData: [
-    //     { 
-    //       PlaceId: 0,
-    //       IsVisible: true,
-    //       HorizontalAnchors: {
-    //         X1: 113,
-    //         X2: 123,
-    //       },
-    //       VerticalAnchors: {
-    //         Y1: 113,
-    //         Y2: 123,
-    //       },
-    //       CardFaceOption: 0,
-    //       CardLayoutOption : 0,
-    //     }
-    //   ]
-    // }
-
-
-    var cardJson = '{"Metadata":{"Picture":53,"Coins":21,"Name":"Some card","Description":"Some good card"},"BrickTree":{"Type":0,"Subtype":0,"HasField":false,"IntField":0,"Slots":[]}}'
-
-
-
-    if (wallet === undefined) {
-      console.log('wallet undefined')
-    }
-    else {
-      if (wallet?.publicKey) {
-        var card: Card = JSON.parse(cardJson)
-        var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
-        serializeCard(card, sbuf)
-        var createdCardMintAdress = await createEntity(["Card"])
-        const entityAccountPublicKey = await PublicKey.createWithSeed(
-          createdCardMintAdress!,
-          'SolceryCard',
-          programId,
-        );
-        console.log('yb')
-        await setPointerAccountData(entityAccountPublicKey, sbuf.getWritten(), [])
-        console.log('ADD CARD')
-        await addCardToCollection(createdCardMintAdress!)
-        await updateCollection()
-        console.log(collection)
-      } 
-    }
-
-
-    // var card: Card = JSON.parse(cardJson)
-    // var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
-    // serializeCard(card, sbuf)
-    // await createEntity("Card", sbuf.getWritten()).then( async () => {
-    //   var cardAdress = await PublicKey.createWithSeed(
-    //     new PublicKey(lastEntityMintAdress),
-    //     'SolceryCard',
-    //     programId,
-    //   )
-    //   console.log('Card mint: ' + cardAdress)
-    //   var rulesetJson = '{"CardMintAddresses":["' + cardAdress + '"],"Deck":[{"IndexAmount":[{"CardId":0,"Amount":5}]}, {"IndexAmount":[{"CardId":0,"Amount":3}]}],"DisplayData":[{"PlaceId":0,"IsVisible":true,"HorizontalAnchors":{"X1":113,"X2":123},"VerticalAnchors":{"Y1":113,"Y2":123},"CardFaceOption":0,"CardLayoutOption":0}]}'
-    //   var ruleset: Ruleset = JSON.parse(rulesetJson)
-    //   var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
-    //   serializeRuleset(ruleset, sbuf)
-    //   await createEntity("Ruleset", sbuf.getWritten()).then( async () => {
-    //     var rulesetMintAddress = lastEntityMintAdress
-    //     console.log('Ruleset mint: ' + rulesetMintAddress)
-    //     const rulesetPointerAccountKey = await PublicKey.createWithSeed(
-    //       new PublicKey(rulesetMintAddress),
-    //       'SolceryRuleset',
-    //       programId,
-    //     );
-    //     await createBoard(rulesetPointerAccountKey)
-    //   }) 
-    // })
-    // collection = await getCollection()
-    // console.log('COLLECTION AFTER ' + collection)
-  }
-
-  useEffect(() => {
-    const refreshTotal = () => { };
-
-    const dispose = marketEmitter.onMarket(() => {
-      refreshTotal();
-    });
-
-    refreshTotal();
-
-    return () => {
-      dispose();
-    };
-  }, [marketEmitter, midPriceInUSD, tokenMap]);
-
   return (
-
-  <Unity tabIndex={3} style={{ width: '100%', height: '100%' }} unityContext={unityContext} />
-  //<Row>
-  //</Row>
-
+    <Unity tabIndex={3} style={{ width: '100%', height: '100%' }} unityContext={unityContext} />
   );
  
-  
 };
