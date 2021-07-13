@@ -1221,6 +1221,7 @@ export const HomeView = () => {
           message: "Card updated",
           description: "Card updated",
         });
+        updateCollection()
         set_unity_card_creation_confirmed(card.Metadata.Name, true);
       })
     } else {
