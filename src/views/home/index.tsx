@@ -139,6 +139,10 @@ class SolanaBuffer {
   getWritten() {
     return this.buf.slice(0, this.pos)
   }
+
+  getRest() {
+    return this.buf.slice(this.pos, this.buf.length)
+  }
 }
 
 export const HomeView = () => {
@@ -402,6 +406,7 @@ export const HomeView = () => {
     { Type: 0, Subtype: 3, FieldType: 0, Slots: 2, }, //Loop
     { Type: 0, Subtype: 4, FieldType: 1, Slots: 0, }, //Card
     { Type: 0, Subtype: 5, FieldType: 2, Slots: 0, }, //Show message
+    { Type: 0, Subtype: 6, FieldType: 2, Slots: 1, }, //Set context var
     { Type: 0, Subtype: 100, FieldType: 0, Slots: 1, }, //MoveTo
     { Type: 0, Subtype: 101, FieldType: 1, Slots: 2, }, //SetPlayerAttr
     { Type: 0, Subtype: 102, FieldType: 1, Slots: 2, }, //AddPlayerAttr
@@ -423,11 +428,11 @@ export const HomeView = () => {
     { Type: 2, Subtype: 1, FieldType: 0, Slots: 3, }, //Conditional
     { Type: 2, Subtype: 2, FieldType: 0, Slots: 2, }, //Add
     { Type: 2, Subtype: 3, FieldType: 0, Slots: 2, }, //Sub
+    { Type: 2, Subtype: 4, FieldType: 2, Slots: 0, }, //GetCtxVar
     { Type: 2, Subtype: 100, FieldType: 1, Slots: 1, }, //GetPlayerAttr
     { Type: 2, Subtype: 101, FieldType: 0, Slots: 0, }, //GetPlayerIndex
     { Type: 2, Subtype: 102, FieldType: 0, Slots: 1, }, //GetCardsAmount
     { Type: 2, Subtype: 103, FieldType: 0, Slots: 0, }, //CurrentPlace
-    { Type: 2, Subtype: 104, FieldType: 0, Slots: 0, }, //GetCtxVar
     { Type: 2, Subtype: 105, FieldType: 0, Slots: 0, }, //CasterPlayerIndex
 
   ]
@@ -624,6 +629,7 @@ export const HomeView = () => {
     }
     else {
       if (wallet?.publicKey) { 
+        console.log('addCardToCollection')
         var collection = await getCollection()
         if (collection != undefined) {
           var cookies = new Cookies()
@@ -702,7 +708,7 @@ export const HomeView = () => {
                 { pubkey: collectionAccount.publicKey, isSigner: false, isWritable: true },
               ],
               programId,
-              data: Buffer.concat([ Buffer.from([0]), Buffer.from([0, 0, 0, 0]) ]),
+              data: Buffer.concat([ Buffer.from([0, 0, 0, 0, 0]), Buffer.from([0, 0, 0, 0]) ]),
             });
             instructions.push(setCollectionAccountDataIx);
 
@@ -712,7 +718,7 @@ export const HomeView = () => {
                 { pubkey: collectionPublicKey, isSigner: false, isWritable: true },
               ],
               programId,
-              data: Buffer.concat([Buffer.from([0]), collectionAccount.publicKey.toBuffer()]),
+              data: Buffer.concat([Buffer.from([0, 0, 0, 0, 0]), collectionAccount.publicKey.toBuffer()]),
             });
             instructions.push(setCollectionPointerIx);
             await sendTransaction(connection, wallet, instructions, accounts, true).then( async () =>  {
@@ -802,16 +808,12 @@ export const HomeView = () => {
       console.log('wallet undefined')
     }
     else {
-      console.log('CREATE BOARD')
       if (wallet?.publicKey) { 
-        console.log('wallter')
         var rulesetPointerAccountInfo = await connection.getAccountInfo(rulesetPointerPublicKey)
         if (rulesetPointerAccountInfo?.data) {
-          console.log('pointer')
           var rulesetAccountKey = new PublicKey(rulesetPointerAccountInfo.data)
           var rulesetAccountInfo = await connection.getAccountInfo(rulesetAccountKey)
           if (rulesetAccountInfo?.data) {
-            console.log('EVERYTHING GOOD')
 
             var data = rulesetAccountInfo.data;
             var ruleset: Ruleset = deserializeRuleset(new SolanaBuffer(data));
@@ -1002,6 +1004,45 @@ export const HomeView = () => {
     castCard(cardId)
   });
 
+  const setEntityData = async (entityAccountPublicKey: PublicKey, data: SolanaBuffer, accounts: Account[]) => {
+    const MAX_DATA_SIZE = 1000
+    if (wallet?.publicKey) { 
+      var accounts = [...accounts]
+      var rest = data.getRest()
+      var instructionBuffer = new SolanaBuffer(Buffer.allocUnsafe(5))
+      instructionBuffer.write8(0)
+      instructionBuffer.writeu32(data.pos)
+      console.log('setEntityData')
+      console.log(instructionBuffer.buf)
+      if (rest.length <= MAX_DATA_SIZE) {
+        const setDataAccountDataIx = new TransactionInstruction({
+          keys: [
+            { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+            { pubkey: entityAccountPublicKey, isSigner: false, isWritable: true },
+          ],
+          programId,
+          data: Buffer.concat([ instructionBuffer.buf, rest]),
+        });
+        await sendTransaction(connection, wallet, [setDataAccountDataIx], accounts, true)
+      } 
+      else {
+        rest = rest.slice(0, MAX_DATA_SIZE)
+        const setDataAccountDataIx = new TransactionInstruction({
+          keys: [
+            { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+            { pubkey: entityAccountPublicKey, isSigner: false, isWritable: true },
+          ],
+          programId,
+          data: Buffer.concat([ instructionBuffer.buf, rest]),
+        });
+        await sendTransaction(connection, wallet, [setDataAccountDataIx], accounts, true).then( async () => {
+          data.pos += MAX_DATA_SIZE
+          await setEntityData(entityAccountPublicKey, data, accounts)
+        })
+      }
+    }
+  }
+
   const setPointerAccountData = async (pointerAccountPublicKey: PublicKey, data: Buffer, accounts: Account[]) => {
     if (wallet?.publicKey) {
       var instructions: TransactionInstruction[] = []
@@ -1014,32 +1055,26 @@ export const HomeView = () => {
         newAccountPubkey: dataAccount.publicKey,
       });
       accounts.push(dataAccount);
-      instructions.push(createDataAccountIx);
-
-      const setDataAccountDataIx = new TransactionInstruction({
-        keys: [
-          { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-          { pubkey: dataAccount.publicKey, isSigner: false, isWritable: true },
-        ],
-        programId,
-        data: Buffer.concat([ Buffer.from([0]), data]),
-      });
-      instructions.push(setDataAccountDataIx);
-
-      const setPointerAccountDataIx = new TransactionInstruction({
-        keys: [
-          { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-          { pubkey: pointerAccountPublicKey, isSigner: false, isWritable: true },
-        ],
-        programId,
-        data: Buffer.concat([Buffer.from([0]), dataAccount.publicKey.toBuffer() ]),
-      });
-      instructions.push(setPointerAccountDataIx);
-     
-      await sendTransaction(connection, wallet, instructions, accounts, true)
-      
+    
+      await sendTransaction(connection, wallet, [createDataAccountIx], accounts, true).then( async () => {
+        await setEntityData(dataAccount.publicKey, new SolanaBuffer(data), accounts).then( async () => {
+          if (wallet?.publicKey) {
+            const setPointerAccountDataIx = new TransactionInstruction({
+              keys: [
+                { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+                { pubkey: pointerAccountPublicKey, isSigner: false, isWritable: true },
+              ],
+              programId,
+              data: Buffer.concat([Buffer.from([0, 0, 0, 0, 0]), dataAccount.publicKey.toBuffer() ]),
+            });
+            await sendTransaction(connection, wallet, [setPointerAccountDataIx], [], true)
+          }
+        })
+      })
     }
   }
+
+
 
   const createEntity = async (entityTypes: string[]) => {
     if (wallet === undefined) {

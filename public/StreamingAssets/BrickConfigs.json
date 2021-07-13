@@ -99,6 +99,22 @@
         "Slots": []
       },
       {
+        "Name": "Set context var",
+        "Type": 0,
+        "Subtype": 6,
+        "Description": "Sets var",
+        "HasField": true,
+        "FieldType": 1,
+        "FieldName": "Var name",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Value"
+          }
+        ]
+      },
+      {
         "Name": "MoveTo",
         "Type": 0,
         "Subtype": 100,
@@ -110,7 +126,7 @@
         "Slots": [
           {
             "Type": 2,
-            "Name": "Player index"
+            "Name": "Place index"
           },
         ]
       },
@@ -392,7 +408,7 @@
         ]
       },
       {
-        "Name": "Substract",
+        "Name": "Subtract",
         "Type": 2,
         "Subtype": 3,
         "Description": "Returns <b>value #1</b> minus <b>value #2</b>",
@@ -410,6 +426,17 @@
             "Name": "Value #2"
           }
         ]
+      },
+      {
+        "Name": "Context var",
+        "Type": 2,
+        "Subtype": 4,
+        "Description": "Returns variable",
+        "HasField": true,
+        "FieldType": 1,
+        "FieldName": "Var name",
+        "HasObjectSelection": false,
+        "Slots": []
       },
       {
         "Name": "Get player attr",
@@ -462,17 +489,6 @@
         "HasField": false,
         "FieldType": 0,
         "FieldName": "",
-        "HasObjectSelection": false,
-        "Slots": []
-      },
-      {
-        "Name": "GetCtxVar (WIP)",
-        "Type": 2,
-        "Subtype": 104,
-        "Description": "Returns id of player casted the card",
-        "HasField": true,
-        "FieldType": 0,
-        "FieldName": "Var index",
         "HasObjectSelection": false,
         "Slots": []
       },
