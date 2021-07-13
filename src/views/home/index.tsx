@@ -53,10 +53,10 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
 var lastMessageNonce = 0;
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/new_build_9.loader.js",
-  dataUrl: "unity_build/new_build_9.data",
-  frameworkUrl: "unity_build/new_build_9.framework.js",
-  codeUrl: "unity_build/new_build_9.wasm",
+  loaderUrl: "unity_build/testJsonOff.loader.js",
+  dataUrl: "unity_build/testJsonOff.data",
+  frameworkUrl: "unity_build/testJsonOff.framework.js",
+  codeUrl: "unity_build/testJsonOff.wasm",
   streamingAssetsUrl: "StreamingAssets"
 });
 
