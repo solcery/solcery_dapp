@@ -901,7 +901,7 @@ export const HomeView = () => {
 
   const addCardsToBoard = async(boardAccountPubkey: PublicKey, basicKeys: KeyInstruction[], cards: string[]) => {
     if (wallet?.publicKey) {
-      var amount = Math.min(2, cards.length)
+      var amount = Math.min(10, cards.length)
       var keys = [...basicKeys]
       for (let i = 0; i < amount; i++) {
         var cardMintKey = cards.shift()
@@ -1131,7 +1131,7 @@ export const HomeView = () => {
   });
 
   const setEntityData = async (entityAccountPublicKey: PublicKey, data: SolanaBuffer, accounts: Account[]) => {
-    const MAX_DATA_SIZE = 1000
+    const MAX_DATA_SIZE = 500
     if (wallet?.publicKey) { 
       var accounts = [...accounts]
       var rest = data.getRest()
