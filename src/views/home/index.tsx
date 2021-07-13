@@ -53,10 +53,10 @@ const joinedBufferToBuffer = function (joinedBuffer: string) {
 var lastMessageNonce = 0;
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/testJsonOff.loader.js",
-  dataUrl: "unity_build/testJsonOff.data",
-  frameworkUrl: "unity_build/testJsonOff.framework.js",
-  codeUrl: "unity_build/testJsonOff.wasm",
+  loaderUrl: "unity_build/build_10.loader.js",
+  dataUrl: "unity_build/build_10.data",
+  frameworkUrl: "unity_build/build_10.framework.js",
+  codeUrl: "unity_build/build_10.wasm",
   streamingAssetsUrl: "StreamingAssets"
 });
 
@@ -411,6 +411,7 @@ export const HomeView = () => {
     { Type: 0, Subtype: 101, FieldType: 1, Slots: 2, }, //SetPlayerAttr
     { Type: 0, Subtype: 102, FieldType: 1, Slots: 2, }, //AddPlayerAttr
     { Type: 0, Subtype: 103, FieldType: 0, Slots: 3, }, //ApplyToPlace
+    { Type: 0, Subtype: 104, FieldType: 1, Slots: 2, }, //SubPlayerAttr
 
     //Conditions
     { Type: 1, Subtype: 0, FieldType: 0, Slots: 0, }, //True
@@ -430,6 +431,9 @@ export const HomeView = () => {
     { Type: 2, Subtype: 3, FieldType: 0, Slots: 2, }, //Sub
     { Type: 2, Subtype: 4, FieldType: 2, Slots: 0, }, //GetCtxVar
     { Type: 2, Subtype: 5, FieldType: 0, Slots: 2, }, //GetCtxVar
+    { Type: 2, Subtype: 2, FieldType: 0, Slots: 2, }, //Mul
+    { Type: 2, Subtype: 3, FieldType: 0, Slots: 2, }, //Div
+    { Type: 2, Subtype: 2, FieldType: 0, Slots: 2, }, //Modulo
     { Type: 2, Subtype: 100, FieldType: 1, Slots: 1, }, //GetPlayerAttr
     { Type: 2, Subtype: 101, FieldType: 0, Slots: 0, }, //GetPlayerIndex
     { Type: 2, Subtype: 102, FieldType: 0, Slots: 1, }, //GetCardsAmount

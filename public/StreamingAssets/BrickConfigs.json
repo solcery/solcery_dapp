@@ -194,6 +194,26 @@
           },
         ]
       },
+      {
+        "Name": "SubPlayerAttr",
+        "Type": 0,
+        "Subtype": 104,
+        "Description": "0 - active, 1 - hp, 2 - mana",
+        "HasField": true,
+        "FieldType": 0,
+        "FieldName": "AttrIndex",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "PlayerIndex"
+          },
+          {
+            "Type": 2,
+            "Name": "AttrValue"
+          },
+        ]
+      },
     ],
     "Condition": [
       {
@@ -412,6 +432,66 @@
         "Type": 2,
         "Subtype": 3,
         "Description": "Returns <b>value #1</b> minus <b>value #2</b>",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Value #1"
+          },
+          {
+            "Type": 2,
+            "Name": "Value #2"
+          }
+        ]
+      },
+      {
+        "Name": "Multiply",
+        "Type": 2,
+        "Subtype": 6,
+        "Description": "Returns sum of <b>values</b>",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Value #1"
+          },
+          {
+            "Type": 2,
+            "Name": "Value #2"
+          }
+        ]
+      },
+      {
+        "Name": "Div",
+        "Type": 2,
+        "Subtype": 7,
+        "Description": "Returns sum of <b>values</b>",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "Value #1"
+          },
+          {
+            "Type": 2,
+            "Name": "Value #2"
+          }
+        ]
+      },
+      {
+        "Name": "Modulo",
+        "Type": 2,
+        "Subtype": 8,
+        "Description": "Returns sum of <b>values</b>",
         "HasField": false,
         "FieldType": 0,
         "FieldName": "",
