@@ -577,14 +577,21 @@ export const HomeView = () => {
       var buffer = new SolanaBuffer(buf);
       var players = buffer.readu32()
       for (let i = 0; i < players; i++) {
-        var address = buffer.readPublicKey(); 
-        playersArray.push({
+        var address = buffer.readPublicKey();
+        var player = {
           Address: address.toBase58(),
           IsActive: Boolean(buffer.readu32()),
           HP: buffer.readu32(),
           Coins: buffer.readu32(),
           IsMe: address.toBase58() == wallet.publicKey.toBase58(),
-        })
+          Attrs: [0]
+        } 
+        var attrs = []
+        for (let i = 0; i < 10; i ++) {
+          attrs.push(buffer.readu32())
+        }
+        player.Attrs = attrs
+        playersArray.push(player)
       }
       var cardTypesAmount = buffer.readu32();
       for (let i = 0; i < cardTypesAmount; i++) {
