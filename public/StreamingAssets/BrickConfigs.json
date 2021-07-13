@@ -593,6 +593,17 @@
         "Slots": []
       },
       {
+        "Name": "Context var old",
+        "Type": 2,
+        "Subtype": 104,
+        "Description": "Returns variable",
+        "HasField": true,
+        "FieldType": 1,
+        "FieldName": "Var name",
+        "HasObjectSelection": false,
+        "Slots": []
+      },
+      {
         "Name": "CasterPlayerIndex",
         "Type": 2,
         "Subtype": 105,
