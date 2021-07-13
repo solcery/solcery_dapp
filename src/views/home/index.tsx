@@ -1036,7 +1036,7 @@ export const HomeView = () => {
             { pubkey: boardAccountPublicKey, isSigner: false, isWritable: true },
           ],
           programId,
-          data: Buffer.from([3]), // instruction = joinBoard
+          data: Buffer.from([4]), // instruction = joinBoard
         });
         instructions.push(joinBoardIx);
         sendTransaction(connection, wallet, instructions, accounts).then(() => {
