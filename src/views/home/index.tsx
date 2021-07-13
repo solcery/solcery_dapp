@@ -54,10 +54,10 @@ var lastMessageNonce = 0;
 var oldCardIndex = 0
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/build_10.loader.js",
-  dataUrl: "unity_build/build_10.data",
-  frameworkUrl: "unity_build/build_10.framework.js",
-  codeUrl: "unity_build/build_10.wasm",
+  loaderUrl: "unity_build/thursday_tweaks_1.loader.js",
+  dataUrl: "unity_build/thursday_tweaks_1.data",
+  frameworkUrl: "unity_build/thursday_tweaks_1.framework.js",
+  codeUrl: "unity_build/thursday_tweaks_1.wasm",
   streamingAssetsUrl: "StreamingAssets"
 });
 
