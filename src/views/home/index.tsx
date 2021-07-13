@@ -429,6 +429,7 @@ export const HomeView = () => {
     { Type: 2, Subtype: 2, FieldType: 0, Slots: 2, }, //Add
     { Type: 2, Subtype: 3, FieldType: 0, Slots: 2, }, //Sub
     { Type: 2, Subtype: 4, FieldType: 2, Slots: 0, }, //GetCtxVar
+    { Type: 2, Subtype: 5, FieldType: 0, Slots: 2, }, //GetCtxVar
     { Type: 2, Subtype: 100, FieldType: 1, Slots: 1, }, //GetPlayerAttr
     { Type: 2, Subtype: 101, FieldType: 0, Slots: 0, }, //GetPlayerIndex
     { Type: 2, Subtype: 102, FieldType: 0, Slots: 1, }, //GetCardsAmount

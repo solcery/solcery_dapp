@@ -439,6 +439,26 @@
         "Slots": []
       },
       {
+        "Name": "Random range",
+        "Type": 2,
+        "Subtype": 5,
+        "Description": "Return random number from X to Y",
+        "HasField": false,
+        "FieldType": 0,
+        "FieldName": "",
+        "HasObjectSelection": false,
+        "Slots": [
+          {
+            "Type": 2,
+            "Name": "From"
+          },
+          {
+            "Type": 2,
+            "Name": "To"
+          },
+        ]
+      },
+      {
         "Name": "Get player attr",
         "Type": 2,
         "Subtype": 100,
