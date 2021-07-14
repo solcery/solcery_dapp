@@ -54,10 +54,10 @@ var lastMessageNonce = 0;
 var oldCardIndex = 0
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/end_turn_button_fix_2.loader.js",
-  dataUrl: "unity_build/end_turn_button_fix_2.data",
-  frameworkUrl: "unity_build/end_turn_button_fix_2.framework.js",
-  codeUrl: "unity_build/end_turn_button_fix_2.wasm",
+  loaderUrl: "unity_build/played_this_turn.loader.js",
+  dataUrl: "unity_build/played_this_turn.data",
+  frameworkUrl: "unity_build/played_this_turn.framework.js",
+  codeUrl: "unity_build/played_this_turn.wasm",
   streamingAssetsUrl: "StreamingAssets"
 });
 
