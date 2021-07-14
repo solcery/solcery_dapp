@@ -162,6 +162,10 @@ export const HomeView = () => {
             'SolceryCollection',
             programId,
           );
+          notify({
+            message: "Collection loaded",
+            description: "Collection successfully loaded",
+          });
           connection.onAccountChange(collectionPublicKey, updateCollection)
         })
       }
@@ -280,7 +284,6 @@ export const HomeView = () => {
         );
         var accInfo = await connection.getAccountInfo(cardLinkAccountPublicKey);
         var cardAccInfo = await connection.getAccountInfo(new PublicKey(accInfo?.data!));
-        console.log(cardAccInfo?.data)
         var card = deserializeCard(new SolanaBuffer(cardAccInfo?.data!))
         cardTypes.push({
           MintAddress: mintAccountPublicKey.toBase58(),
@@ -513,7 +516,6 @@ export const HomeView = () => {
   }
 
   const deserializeCard = (buffer: SolanaBuffer) => {
-    console.log(buffer.buf)
     var clientMetadataSize = buffer.readu32();
     var md = {
       Picture: buffer.readu32(),
@@ -962,6 +964,10 @@ export const HomeView = () => {
             accounts.push(boardAccount)
             instructions.push(createBoardAccountIx)
 
+            var randomSeed = Math.floor(Math.random() * 400000)
+            var buf = Buffer.allocUnsafe(5)
+            buf.writeUInt8(2, 0)
+            buf.writeUInt32LE(randomSeed, 1)
             var keys = [
               { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
               { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
@@ -971,7 +977,7 @@ export const HomeView = () => {
             const createBoardIx = new TransactionInstruction({
               keys: keys,
               programId,
-              data: Buffer.from([2]),
+              data: buf,
             });
             instructions.push(createBoardIx);
             
