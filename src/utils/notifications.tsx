@@ -7,7 +7,7 @@ export function notify({
   description = undefined as any,
   txid = "",
   type = "info",
-  placement = "bottomLeft",
+  placement = "topLeft",
 }) {
   if (txid) {
     //   <Link
