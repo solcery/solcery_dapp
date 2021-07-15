@@ -564,10 +564,10 @@ export const HomeView = () => {
             if (boardData.Message.Nonce != lastMessageNonce) {
               console.log(boardData.Message.Nonce)
               console.log(lastMessageNonce)
-              notify({
-                message: "Message",
-                description: boardData.Message.Message,
-              });
+              // notify({
+              //   message: "Message",
+              //   description: boardData.Message.Message,
+              // });
               lastMessageNonce = boardData.Message.Nonce
             }
           }
