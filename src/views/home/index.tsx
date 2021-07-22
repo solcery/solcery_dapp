@@ -810,84 +810,6 @@ export const HomeView = () => {
     return result
   }
  
-  const createBoardOld = async (rulesetPointerPublicKey: PublicKey) => {
-    if (wallet === undefined) {
-      console.log('wallet undefined')
-    }
-    else {
-      if (wallet?.publicKey) { 
-        var rulesetPointerAccountInfo = await connection.getAccountInfo(rulesetPointerPublicKey)
-        if (rulesetPointerAccountInfo?.data) {
-          var rulesetAccountKey = new PublicKey(rulesetPointerAccountInfo.data)
-          var rulesetAccountInfo = await connection.getAccountInfo(rulesetAccountKey)
-          if (rulesetAccountInfo?.data) {
-
-            var data = rulesetAccountInfo.data;
-            var ruleset: Ruleset = deserializeRuleset(new SolanaBuffer(data));
-            var boardAccount = new Account()
-            var accounts: Account[] = [];
-            var createBoardAccountIx = SystemProgram.createAccount({
-              programId: programId,
-              space: 23530, // TODO
-              lamports: await connection.getMinimumBalanceForRentExemption(23530, 'singleGossip'),
-              fromPubkey: wallet.publicKey,
-              newAccountPubkey: boardAccount.publicKey,
-            });
-
-            accounts.push(boardAccount);
-            var instructions = [createBoardAccountIx];
-            var keys = [
-              { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-              { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
-              { pubkey: rulesetPointerPublicKey, isSigner: false, isWritable: false },
-              { pubkey: rulesetAccountKey, isSigner: false, isWritable: false },
-            ]
-
-            for (const mintAddress of ruleset.CardMintAddresses) {
-              var cardMintKey = new PublicKey(mintAddress)
-              const cardTypePointerKey = await PublicKey.createWithSeed(
-                cardMintKey,
-                'SolceryCard',
-                programId,
-              );
-              var cardTypePointerData = await connection.getAccountInfo(cardTypePointerKey)
-              var cardTypeMetadataKey = new PublicKey(cardTypePointerData?.data!)
-              keys.push({ pubkey: cardTypePointerKey, isSigner: false, isWritable: false });
-              keys.push({ pubkey: cardTypeMetadataKey, isSigner: false, isWritable: false });
-            }    
-
-            const createBoardIx = new TransactionInstruction({
-              keys: keys,
-              programId,
-              data: Buffer.from([2]),
-            });
-            instructions.push(createBoardIx);
-
-            const joinBoardIx = new TransactionInstruction({
-              keys: [
-                { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-                { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
-              ],
-              programId,
-              data: Buffer.from([3]), // instruction = joinBoard
-            });
-            instructions.push(joinBoardIx);
-            sendTransaction(connection, wallet, instructions, accounts).then( async () => {
-              notify({
-                message: "Board started",
-                description: "Started board " + boardAccount.publicKey,
-              });
-              var cookies = new Cookies();
-              cookies.set('boardAccountKey', boardAccount.publicKey.toBase58());
-              await updateBoard();
-              connection.onAccountChange(boardAccount.publicKey, updateBoard)
-            }); 
-          }
-        }
-      }
-    }
-  }
-
   const getPointerData = async (pointerAccountPublicKey: PublicKey) => {
     var pointerAccountData = await connection.getAccountInfo(pointerAccountPublicKey)
     var dataAccountPublicKey = pointerAccountData?.data!
@@ -934,6 +856,29 @@ export const HomeView = () => {
     }
   }
 
+  const findMatch = async (rulesetPointerPublicKey: PublicKey) => {
+    if (wallet === undefined) {
+      console.log('wallet undefined')
+    }
+    else {
+      if (wallet?.publicKey) { 
+        var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
+        var lobbyStateData = lobbyStateAccountInfo?.data
+        console.log('lobbyStateData')
+        console.log(lobbyStateData)
+        if (lobbyStateData) {
+          if (lobbyStateData.readUInt32LE(0) == 0) { // no people in queue, creating new fight
+            createBoard(rulesetPointerPublicKey)
+          } else {
+            var boardAccountKey = new PublicKey(lobbyStateData.slice(4, 36)) //
+            console.log(boardAccountKey.toBase58())
+            joinBoard(boardAccountKey)
+          }
+        }
+      }
+    }
+  }
+
   const createBoard = async (rulesetPointerPublicKey: PublicKey) => {
     if (wallet === undefined) {
       console.log('wallet undefined')
@@ -970,6 +915,7 @@ export const HomeView = () => {
             buf.writeUInt32LE(randomSeed, 1)
             var keys = [
               { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+              { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
               { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
               { pubkey: rulesetPointerPublicKey, isSigner: false, isWritable: false },
               { pubkey: rulesetAccountKey, isSigner: false, isWritable: false },
@@ -981,20 +927,19 @@ export const HomeView = () => {
             });
             instructions.push(createBoardIx);
             
-            await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
-              console.log('boardCreated')
-              console.log(ruleset.CardMintAddresses)
-              await addCardsToBoard(boardAccount.publicKey, keys, ruleset.CardMintAddresses).then( async () => {
+            return await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+              return await addCardsToBoard(boardAccount.publicKey, keys, ruleset.CardMintAddresses).then( async () => {
                 if (wallet?.publicKey) { 
                   const joinBoardIx = new TransactionInstruction({
                     keys: [
                       { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+                      { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
                       { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
                     ],
                     programId,
                     data: Buffer.from([4]), // instruction = joinBoard
                   });
-                  sendTransaction(connection, wallet, [joinBoardIx], []).then( async () => {
+                  return sendTransaction(connection, wallet, [joinBoardIx], []).then( async () => {
                     notify({
                       message: "Board started",
                       description: "Started board " + boardAccount.publicKey,
@@ -1005,6 +950,7 @@ export const HomeView = () => {
                     connection.onAccountChange(boardAccount.publicKey, updateBoard)
                   })
                 }
+                return boardAccount.publicKey
               })
             })
           }
@@ -1013,6 +959,29 @@ export const HomeView = () => {
     }
   }
   unityContext.on("CreateBoard", async () => {
+    // var lobbyAccountMintKey = await createEntity(['Lobby'])
+    // if (lobbyAccountMintKey) {
+    //   const lobbyKey = await PublicKey.createWithSeed(
+    //     new PublicKey(lobbyAccountMintKey),
+    //     'SolceryLobby',
+    //     programId,
+    //   );
+    // }
+
+
+    // if (wallet?.publicKey) {
+    //   const lobbyAccount = new Account()
+    //   var createDataAccountIx = SystemProgram.createAccount({
+    //     programId: programId,
+    //     space: 32000,
+    //     lamports: await connection.getMinimumBalanceForRentExemption(32000, 'singleGossip'),
+    //     fromPubkey: wallet.publicKey,
+    //     newAccountPubkey: lobbyAccount.publicKey,
+    //   });
+    //   console.log(lobbyAccount.publicKey.toBase58())
+    //   sendTransaction(connection, wallet, [createDataAccountIx], [lobbyAccount])
+    // }
+
     var cookies = new Cookies()
     var myMintKey = new PublicKey(cookies.get('ruleset'))
     const rulesetAccountPubkey = await PublicKey.createWithSeed(
@@ -1020,10 +989,12 @@ export const HomeView = () => {
       'SolceryRuleset',
       programId,
     );
-    createBoard(rulesetAccountPubkey)
+    findMatch(rulesetAccountPubkey)
+
+    // createBoard(rulesetAccountPubkey)
   });
 
-  const joinBoard = async (boardAccountKey: string) => {
+  const joinBoard = async (boardAccountPublicKey: PublicKey) => {
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
@@ -1033,12 +1004,10 @@ export const HomeView = () => {
         accounts = []
       
         var instructions = [];
-        var keyBufRaw = Buffer.from(boardAccountKey, 'ascii');
-        var newBuf = keyBufRaw.slice(0, 44);
-        var boardAccountPublicKey = new PublicKey(newBuf.toString('utf8'));
         const joinBoardIx = new TransactionInstruction({
           keys: [
             { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+            { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
             { pubkey: boardAccountPublicKey, isSigner: false, isWritable: true },
           ],
           programId,
@@ -1062,7 +1031,7 @@ export const HomeView = () => {
       }
     }
   };
-  unityContext.on("JoinBoard", (boardAccountKey) => joinBoard(boardAccountKey));
+  unityContext.on("JoinBoard", (boardAccountStringKey) => joinBoard(new PublicKey(boardAccountStringKey)));
 
   var connection = useConnection();
   const { marketEmitter, midPriceInUSD } = useMarkets();
@@ -1080,6 +1049,9 @@ export const HomeView = () => {
 
 
   var programId = new PublicKey("4YyCGiiZ3EorWmcQs3yrCRfTGt8udhDvV9ffJoWJaXUX");
+  //3zaKevPuxVAzYw3jGNJXvutWDz259qnjqufpFX5hpMRh
+  //gfiDUhR8FHi45gUvkeKxDXjzgMyLKxPzyVJSgGqAjP9 -- localnet
+  var lobbyAccountKey = new PublicKey("8t4XsAbA75xAq8LKdM97WFT1XyPxG3fPY1UNA4um6ywm");
   var oldProgramId = new PublicKey("5Ds6QvdZAqwVozdu2i6qzjXm8tmBttV6uHNg4YU8rB1P");
 
 
@@ -1175,7 +1147,7 @@ export const HomeView = () => {
     }
   }
 
-  const setPointerAccountData = async (pointerAccountPublicKey: PublicKey, data: Buffer, accounts: Account[]) => {
+  const setPointerAccountData = async (pointerAccountPublicKey: PublicKey, data: Buffer, accounts: Account[] = []) => {
     if (wallet?.publicKey) {
       var instructions: TransactionInstruction[] = []
       const dataAccount = new Account()
@@ -1388,142 +1360,7 @@ export const HomeView = () => {
         description: "Ruleset saved",
       });
     })
-    // var sbuf = new SolanaBuffer(buf)
-    // await createEntity("Card").then( async () => {
-    //   console.log('CREATED')
-    //   console.log(lastEntityMintAdress)
-    //   var createdCardMintAdress = new PublicKey(lastEntityMintAdress)
-    //   const entityAccountPublicKey = await PublicKey.createWithSeed(
-    //     createdCardMintAdress!,
-    //     'SolceryCard',
-    //     programId,
-    //   );
-    //   await setPointerAccountData(entityAccountPublicKey!, sbuf.buf, []).then( async () => {
-    //     console.log('pointer setEEEE')
-    //     await addCardToCollection(createdCardMintAdress!)
-    //   })
-    // })
   })
-
-  // unityContext.on("UpdateCard", async (cardData) =>  {
-  //   var card: Card = JSON.parse(cardData)
-  //   var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
-  //   serializeCard(card, sbuf)
-  //   await createEntity("Card").then( async () => {
-  //     var createdCardMintAdress = new PublicKey(lastEntityMintAdress)
-  //     const entityAccountPublicKey = await PublicKey.createWithSeed(
-  //       createdCardMintAdress!,
-  //       'SolceryCard',
-  //       programId,
-  //     );
-  //     setPointerAccountData(entityAccountPublicKey!, sbuf.getWritten(), [])
-  //   })
-  // })
-
-  const testButton = async () => {
-    // var testTree: Card = {
-    //   Metadata: {
-    //     Picture: 53, 
-    //     Coins: 21,
-    //     Name: "Some card",
-    //     Description: "Some good card",
-    //   },
-    //   BrickData: {
-    //     Type: 0,
-    //     Subtype: 0,
-    //     HasField: false,
-    //     IntField: 0,
-    //     Slots: []
-    //   }
-    // }
-
-    // var testRuleset: Ruleset = {
-    //   CardMintAddresses: [
-    //       '5Ds6QvdZAqwVozdu2i6qzjXm8tmBttV6uHNg4YU8rB1P', '5Ds6QvdZAqwVozdu2i6qzjXm8tmBttV6uHNg4YU8rB1P'
-    //   ],
-    //   Deck: [
-    //     {
-    //         IndexAmount: [
-    //             { CardId: 0, Amount: 5 }, // index: id
-    //             { CardId: 2, Amount: 5 }, // index: id
-    //         ],
-    //     }
-    //   ],
-    //   DisplayData: [
-    //     { 
-    //       PlaceId: 0,
-    //       IsVisible: true,
-    //       HorizontalAnchors: {
-    //         X1: 113,
-    //         X2: 123,
-    //       },
-    //       VerticalAnchors: {
-    //         Y1: 113,
-    //         Y2: 123,
-    //       },
-    //       CardFaceOption: 0,
-    //       CardLayoutOption : 0,
-    //     }
-    //   ]
-    // }
-
-
-    var cardJson = '{"Metadata":{"Picture":53,"Coins":21,"Name":"Some card","Description":"Some good card"},"BrickTree":{"Type":0,"Subtype":0,"HasField":false,"IntField":0,"Slots":[]}}'
-
-
-
-    if (wallet === undefined) {
-      console.log('wallet undefined')
-    }
-    else {
-      if (wallet?.publicKey) {
-        var card: Card = JSON.parse(cardJson)
-        var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
-        serializeCard(card, sbuf)
-        var createdCardMintAdress = await createEntity(["Card"])
-        const entityAccountPublicKey = await PublicKey.createWithSeed(
-          createdCardMintAdress!,
-          'SolceryCard',
-          programId,
-        );
-        console.log('yb')
-        await setPointerAccountData(entityAccountPublicKey, sbuf.getWritten(), [])
-        console.log('ADD CARD')
-        await addCardToCollection(createdCardMintAdress!)
-        await updateCollection()
-        console.log(collection)
-      } 
-    }
-
-
-    // var card: Card = JSON.parse(cardJson)
-    // var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
-    // serializeCard(card, sbuf)
-    // await createEntity("Card", sbuf.getWritten()).then( async () => {
-    //   var cardAdress = await PublicKey.createWithSeed(
-    //     new PublicKey(lastEntityMintAdress),
-    //     'SolceryCard',
-    //     programId,
-    //   )
-    //   console.log('Card mint: ' + cardAdress)
-    //   var rulesetJson = '{"CardMintAddresses":["' + cardAdress + '"],"Deck":[{"IndexAmount":[{"CardId":0,"Amount":5}]}, {"IndexAmount":[{"CardId":0,"Amount":3}]}],"DisplayData":[{"PlaceId":0,"IsVisible":true,"HorizontalAnchors":{"X1":113,"X2":123},"VerticalAnchors":{"Y1":113,"Y2":123},"CardFaceOption":0,"CardLayoutOption":0}]}'
-    //   var ruleset: Ruleset = JSON.parse(rulesetJson)
-    //   var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
-    //   serializeRuleset(ruleset, sbuf)
-    //   await createEntity("Ruleset", sbuf.getWritten()).then( async () => {
-    //     var rulesetMintAddress = lastEntityMintAdress
-    //     console.log('Ruleset mint: ' + rulesetMintAddress)
-    //     const rulesetPointerAccountKey = await PublicKey.createWithSeed(
-    //       new PublicKey(rulesetMintAddress),
-    //       'SolceryRuleset',
-    //       programId,
-    //     );
-    //     await createBoard(rulesetPointerAccountKey)
-    //   }) 
-    // })
-    // collection = await getCollection()
-    // console.log('COLLECTION AFTER ' + collection)
-  }
 
   useEffect(() => {
     const refreshTotal = () => { };
