@@ -55,10 +55,10 @@ var lastMessageNonce = 0;
 var oldCardIndex = 0
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/build.loader.js",
-  dataUrl: "unity_build/build.data",
-  frameworkUrl: "unity_build/build.framework.js",
-  codeUrl: "unity_build/build.wasm",
+  loaderUrl: "unity_build/clash_of_sols_4_reconnect_fix.loader.js",
+  dataUrl: "unity_build/clash_of_sols_4_reconnect_fix.data",
+  frameworkUrl: "unity_build/clash_of_sols_4_reconnect_fix.framework.js",
+  codeUrl: "unity_build/clash_of_sols_4_reconnect_fix.wasm",
   streamingAssetsUrl: "StreamingAssets"
 });
 
