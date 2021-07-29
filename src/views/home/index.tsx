@@ -235,6 +235,12 @@ export const HomeView = () => {
   }
 
 
+  type LogEntry = {
+    playerId: number,
+    actionType: number,
+    data: number,
+  }
+
   type Collection = {
     CardTypes: {
       MintAddress: string
@@ -578,17 +584,13 @@ export const HomeView = () => {
         if (logInfo?.data) {
           var sbuf = new SolanaBuffer(logInfo.data)
           console.log(sbuf.buf)
-          var steps: {
-            actionType: number,
-            playerId: number,
-            cardId: number,
-          }[] = []
+          var steps: LogEntry[] = []
           var fightLogSize = sbuf.readu32()
           for (let i = 0; i < fightLogSize; i++) {
             steps.push({
-              actionType: 0,
               playerId: sbuf.readu32(),
-              cardId: sbuf.readu32(),
+              actionType: sbuf.readu32(),
+              data: sbuf.readu32(),
             })
           }
           var fightLog = {
@@ -1154,7 +1156,7 @@ export const HomeView = () => {
   });
 
 
-  const castCard = async(cardId: number) => {
+  const logAction = async(action: LogEntry) => {
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
@@ -1169,9 +1171,12 @@ export const HomeView = () => {
             'SolceryFightLog',
             programId,
           );
-          var buf = Buffer.allocUnsafe(5);
-          buf.writeUInt8(5, 0); // instruction = cast
-          buf.writeUInt32LE(cardId, 1);
+          var sbuf = new SolanaBuffer(Buffer.allocUnsafe(13));
+          sbuf.write8(5) // instruction = LogAction
+          sbuf.writeu32(action.playerId)
+          sbuf.writeu32(action.actionType)
+          sbuf.writeu32(action.data)
+          console.log(sbuf.buf)
           const castIx = new TransactionInstruction({
             keys: [
               { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
@@ -1179,7 +1184,7 @@ export const HomeView = () => {
               { pubkey: fightLogAccountKey, isSigner: false, isWritable: true },
             ],
             programId,
-            data: buf,
+            data: sbuf.buf,
           });
           sendTransaction(connection, wallet, [castIx], []).then(async () => {
             updateLog();
@@ -1196,8 +1201,12 @@ export const HomeView = () => {
       }
     }    
   }
-  unityContext.on("UseCard", (cardId) => {
-    castCard(cardId)
+  unityContext.on("LogAction", (actionJson) => {
+    console.log('logAction')
+    console.log(actionJson)
+    var action = JSON.parse(actionJson)
+    console.log(action)
+    logAction(action)
   });
 
   const setEntityData = async (entityAccountPublicKey: PublicKey, data: SolanaBuffer, accounts: Account[]) => {
