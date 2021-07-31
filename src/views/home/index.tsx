@@ -162,6 +162,7 @@ export const HomeView = () => {
       if (wallet?.publicKey) { 
         updateBoard();
         updateLog();
+        //TODO: connection.onAccountChange(updateLog)
         await updateCollection().then(async () => {
           var cookies = new Cookies()
           var myStringKey = cookies.get('ruleset')
@@ -1173,8 +1174,9 @@ export const HomeView = () => {
             'SolceryFightLog',
             programId,
           );
-          var sbuf = new SolanaBuffer(Buffer.allocUnsafe(1 + log.Steps.length * 12));
+          var sbuf = new SolanaBuffer(Buffer.allocUnsafe(5 + log.Steps.length * 12));
           sbuf.write8(5) // instruction = LogAction
+          sbuf.writeu32(log.Steps.length)
           for (var i in log.Steps) {
             var action = log.Steps[i]
             sbuf.writeu32(action.playerId)
