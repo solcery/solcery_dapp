@@ -234,6 +234,9 @@ export const HomeView = () => {
     }
   }
 
+  type FightLog = {
+    Steps: LogEntry[],
+  }
 
   type LogEntry = {
     playerId: number,
@@ -449,7 +452,7 @@ export const HomeView = () => {
     { Type: 2, Subtype: 3, FieldType: 0, Slots: 2, }, //Sub
     { Type: 2, Subtype: 4, FieldType: 2, Slots: 0, }, //GetCtxVar
     { Type: 2, Subtype: 5, FieldType: 0, Slots: 2, }, //GetCtxVar
-    { Type: 2, Subtype: 2, FieldType: 0, Slots: 2, }, //Mul
+    { Type: 2, Subtype: 6, FieldType: 0, Slots: 2, }, //Mul
     { Type: 2, Subtype: 3, FieldType: 0, Slots: 2, }, //Div
     { Type: 2, Subtype: 2, FieldType: 0, Slots: 2, }, //Modulo
     { Type: 2, Subtype: 100, FieldType: 1, Slots: 1, }, //GetPlayerAttr
@@ -676,16 +679,15 @@ export const HomeView = () => {
       }
       var cardTypesAmount = buffer.readu32();
       for (let i = 0; i < cardTypesAmount; i++) {
-        console.log(buffer)
         var cardId = buffer.readu32()
         var cardType = deserializeCard(buffer, true)
-        cardTypes.push({
+        var x = {
           Id: cardId,
           Metadata: cardType.Metadata,
           BrickTree: cardType.BrickTree,
-        });
+        }
+        cardTypes.push(x);
       }
-      console.log(buffer.buf.slice(buffer.pos, buffer.pos + 100))
       var cards = buffer.readu32()
       for (let i = 0; i < cards; i++) {
         var id = buffer.readu32()
@@ -961,8 +963,8 @@ export const HomeView = () => {
 
             var createBoardAccountIx = SystemProgram.createAccount({
               programId: programId,
-              space: 32000, // TODO
-              lamports: await connection.getMinimumBalanceForRentExemption(32000, 'singleGossip') / 12,
+              space: 50000, // TODO
+              lamports: await connection.getMinimumBalanceForRentExemption(50000, 'singleGossip') / 12,
               fromPubkey: wallet.publicKey,
               newAccountPubkey: boardAccount.publicKey,
             });
@@ -1156,7 +1158,7 @@ export const HomeView = () => {
   });
 
 
-  const logAction = async(action: LogEntry) => {
+  const logAction = async(log: FightLog) => {
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
@@ -1171,11 +1173,14 @@ export const HomeView = () => {
             'SolceryFightLog',
             programId,
           );
-          var sbuf = new SolanaBuffer(Buffer.allocUnsafe(13));
+          var sbuf = new SolanaBuffer(Buffer.allocUnsafe(1 + log.Steps.length * 12));
           sbuf.write8(5) // instruction = LogAction
-          sbuf.writeu32(action.playerId)
-          sbuf.writeu32(action.actionType)
-          sbuf.writeu32(action.data)
+          for (var i in log.Steps) {
+            var action = log.Steps[i]
+            sbuf.writeu32(action.playerId)
+            sbuf.writeu32(action.actionType)
+            sbuf.writeu32(action.data)
+          }
           console.log(sbuf.buf)
           const castIx = new TransactionInstruction({
             keys: [
@@ -1446,7 +1451,7 @@ export const HomeView = () => {
 
   unityContext.on("UpdateRuleset", async (data) =>  {
     var ruleset: Ruleset = JSON.parse(data)
-    var sbuf = new SolanaBuffer(Buffer.allocUnsafe(2000))
+    var sbuf = new SolanaBuffer(Buffer.allocUnsafe(8000))
     serializeRuleset(ruleset, sbuf)
     var cookies = new Cookies()
     var mainMintKey = new PublicKey(cookies.get('ruleset'))
