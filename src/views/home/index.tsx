@@ -1167,6 +1167,7 @@ export const HomeView = () => {
       if (wallet?.publicKey) {
         const cookies = new Cookies();
         var boardAccountStringKey = cookies.get('boardAccountKey');
+        //if actionType = 1, actionData = 1 - clearCookie
         if (boardAccountStringKey) {
           var boardAccountPubkey = new PublicKey(boardAccountStringKey);
           const fightLogAccountKey = await PublicKey.createWithSeed(
