@@ -16,32 +16,32 @@ import { cache, getMultipleAccounts, MintParser } from "./accounts";
 import { TokenListProvider, ENV as ChainID, TokenInfo } from "@solana/spl-token-registry";
 
 export type ENV =
-  | "mainnet-beta"
-  | "testnet"
+  // | "mainnet-beta"
+  // | "testnet"
   | "devnet"
-  | "localnet";
+  // | "localnet";
 
 export const ENDPOINTS = [
-  {
-    name: "mainnet-beta" as ENV,
-    endpoint: "https://solana-api.projectserum.com/",
-    chainID: ChainID.MainnetBeta,
-  },
-  {
-    name: "testnet" as ENV,
-    endpoint: clusterApiUrl("testnet"),
-    chainID: ChainID.Testnet,
-  },
+  // {
+  //   name: "mainnet-beta" as ENV,
+  //   endpoint: "https://solana-api.projectserum.com/",
+  //   chainID: ChainID.MainnetBeta,
+  // },
+  // {
+  //   name: "testnet" as ENV,
+  //   endpoint: clusterApiUrl("testnet"),
+  //   chainID: ChainID.Testnet,
+  // },
   {
     name: "devnet" as ENV,
     endpoint: clusterApiUrl("devnet"),
     chainID: ChainID.Devnet,
   },
-  {
-    name: "localnet" as ENV,
-    endpoint: "http://127.0.0.1:8899",
-    chainID: ChainID.Devnet,
-  },
+  // {
+  //   name: "localnet" as ENV,
+  //   endpoint: "http://127.0.0.1:8899",
+  //   chainID: ChainID.Devnet,
+  // },
 ];
 
 const DEFAULT = ENDPOINTS[0].endpoint;
