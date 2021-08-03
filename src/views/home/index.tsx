@@ -55,10 +55,10 @@ var lastMessageNonce = 0;
 var oldCardIndex = 0
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/summoner_6.loader.js",
-  dataUrl: "unity_build/summoner_6.data",
-  frameworkUrl: "unity_build/summoner_6.framework.js",
-  codeUrl: "unity_build/summoner_6.wasm",
+  loaderUrl: "unity_build/summoner_7.loader.js",
+  dataUrl: "unity_build/summoner_7.data",
+  frameworkUrl: "unity_build/summoner_7.framework.js",
+  codeUrl: "unity_build/summoner_7.wasm",
   streamingAssetsUrl: "StreamingAssets"
 });
 
