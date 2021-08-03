@@ -155,8 +155,8 @@ class SolanaBuffer {
 export const HomeView = () => {
 
   onWalletConnectedCallback = async () => {
-    updateBoard()
-    updateLog()
+    updateBoard(true)
+    updateLog(true)
     return true
   }
 
@@ -540,7 +540,7 @@ export const HomeView = () => {
     }
   }
 
-  const updateLog = async () => {
+  const updateLog = async (subscribe: boolean = false) => {
     if (wallet?.publicKey) {
       var playerAccountKey = await PublicKey.createWithSeed(
         wallet.publicKey,
@@ -556,6 +556,9 @@ export const HomeView = () => {
           programId,
         );         
         var logInfo = await connection.getAccountInfo(fightLogAccountPublicKey);
+        if (subscribe) {
+          connection.onAccountChange(fightLogAccountPublicKey, () => { updateLog() })
+        }
         if (logInfo?.data) {
           var sbuf = new SolanaBuffer(logInfo.data)
           var steps: LogEntry[] = []
@@ -576,7 +579,7 @@ export const HomeView = () => {
     }
   }
 
-  const updateBoard = async () => {
+  const updateBoard = async (subscribe: boolean = false) => {
     if (wallet?.publicKey) {
       var playerAccountKey = await PublicKey.createWithSeed(
         wallet.publicKey,
@@ -588,6 +591,9 @@ export const HomeView = () => {
         var boardAccountKey = new PublicKey(accInfo.data.slice(1))
         var boardInfo = await connection.getAccountInfo(boardAccountKey);
         if (boardInfo?.data) {
+          if (subscribe) {
+            connection.onAccountChange(boardAccountKey, () => { updateBoard() })
+          }
           var buf = Buffer.from(boardInfo.data);
           var boardData = await serializeBoardData(buf);
           if (boardData) {
@@ -878,9 +884,9 @@ export const HomeView = () => {
           });
           var cookies = new Cookies();
           updateBoard();
-          connection.onAccountChange(boardAccountPublicKey, updateBoard)
+          connection.onAccountChange(boardAccountPublicKey, () => { updateBoard() })
           updateLog();
-          connection.onAccountChange(fightLogAccountPublicKey, updateLog)
+          connection.onAccountChange(fightLogAccountPublicKey, () => { updateLog() })
         },
         () => notify({
           message: "Board join failed",
