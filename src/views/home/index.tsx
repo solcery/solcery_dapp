@@ -155,6 +155,8 @@ class SolanaBuffer {
 export const HomeView = () => {
 
   onWalletConnectedCallback = async () => {
+    updateBoard()
+    updateLog()
     return true
   }
 
@@ -238,26 +240,20 @@ export const HomeView = () => {
   }
 
   const getRuleset = async () => {
-    console.log('GET RULESET')
     var cookies = new Cookies()
-    console.log('ruleset adress ' + cookies.get('ruleset'))
     const rulesetPointerKey = await PublicKey.createWithSeed(
       new PublicKey(cookies.get('ruleset')), //card key
       'SolceryRuleset',
       programId,
     );
     var rulesetPointerInfo = await connection.getAccountInfo(rulesetPointerKey)
-    console.log(rulesetPointerInfo?.data)
     var rulesetAccountKey = new PublicKey(rulesetPointerInfo?.data!)
     var rulesetAccountInfo = await connection.getAccountInfo(rulesetAccountKey)
     var ruleset = deserializeRuleset(new SolanaBuffer(rulesetAccountInfo?.data!))
-    console.log(ruleset)
     return ruleset;
   }
 
   const deserializeCollection = async (sbuf: SolanaBuffer) => {
-    console.log('deserializeCollection')
-    console.log(sbuf.buf)
     var cardTypes: {
       MintAddress: string
       Metadata: CardMetadata,
@@ -309,8 +305,6 @@ export const HomeView = () => {
   }
 
   const serializeRuleset = (ruleset: Ruleset, sbuf: SolanaBuffer) => {
-    console.log("serializeRuleset")
-    console.log(ruleset)
     sbuf.writeu32(ruleset.CardMintAddresses.length)
     ruleset.CardMintAddresses.forEach((mintAddress) => {
       sbuf.writePublicKey(new PublicKey(mintAddress))
@@ -528,7 +522,6 @@ export const HomeView = () => {
 
 
   const getCardClientMetaData = (cardData: Buffer) => {
-    console.log('getCardClientMetaData')
     if (cardData.length <= 0) {
       return {
         Picture: 1,
@@ -549,10 +542,14 @@ export const HomeView = () => {
 
   const updateLog = async () => {
     if (wallet?.publicKey) {
-      var cookies = new Cookies();
-      var boardAccountStringKey = cookies.get('boardAccountKey');
-      if (boardAccountStringKey) {
-        var boardAccountKey = new PublicKey(boardAccountStringKey);
+      var playerAccountKey = await PublicKey.createWithSeed(
+        wallet.publicKey,
+        'SolceryAccountState6',
+        programId,
+      );
+      var accInfo = await connection.getAccountInfo(playerAccountKey);
+      if (accInfo?.data && accInfo?.data[0] != 0) {
+        var boardAccountKey = new PublicKey(accInfo.data.slice(1));
         const fightLogAccountPublicKey = await PublicKey.createWithSeed(
           boardAccountKey,
           'SolceryFightLog',
@@ -561,7 +558,6 @@ export const HomeView = () => {
         var logInfo = await connection.getAccountInfo(fightLogAccountPublicKey);
         if (logInfo?.data) {
           var sbuf = new SolanaBuffer(logInfo.data)
-          console.log(sbuf.buf)
           var steps: LogEntry[] = []
           var fightLogSize = sbuf.readu32()
           for (let i = 0; i < fightLogSize; i++) {
@@ -575,7 +571,6 @@ export const HomeView = () => {
             Steps: steps
           }
           unityContext.send("ReactToUnity", "UpdateLog", JSON.stringify(fightLog));  
-          console.log(JSON.stringify(fightLog))
         }
       }
     }
@@ -583,13 +578,17 @@ export const HomeView = () => {
 
   const updateBoard = async () => {
     if (wallet?.publicKey) {
-      var cookies = new Cookies();
-      var boardAccountStringKey = cookies.get('boardAccountKey');
-      if (boardAccountStringKey) {
-        var boardAccountKey = new PublicKey(boardAccountStringKey);
-        var accInfo = await connection.getAccountInfo(new PublicKey(boardAccountKey));
-        if (accInfo?.data) {
-          var buf = Buffer.from(accInfo?.data);
+      var playerAccountKey = await PublicKey.createWithSeed(
+        wallet.publicKey,
+        'SolceryAccountState6',
+        programId,
+      );
+      var accInfo = await connection.getAccountInfo(playerAccountKey);
+       if (accInfo?.data && accInfo?.data[0] != 0) {
+        var boardAccountKey = new PublicKey(accInfo.data.slice(1))
+        var boardInfo = await connection.getAccountInfo(boardAccountKey);
+        if (boardInfo?.data) {
+          var buf = Buffer.from(boardInfo.data);
           var boardData = await serializeBoardData(buf);
           if (boardData) {
             if (boardData.Message.Nonce != lastMessageNonce) {
@@ -627,7 +626,6 @@ export const HomeView = () => {
           IsMe: address.toBase58() == wallet.publicKey.toBase58(),
           Attrs: [0]
         }
-        console.log(Date.now())
         var attrs = []
         for (let i = 0; i < 10; i ++) {
           attrs.push(buffer.readu32())
@@ -702,7 +700,6 @@ export const HomeView = () => {
       var keys = [...basicKeys]
       for (let i = 0; i < amount; i++) {
         var cardMintKey = cards.shift()
-        console.log(cardMintKey)
         const cardTypePointerKey = await PublicKey.createWithSeed(
           new PublicKey(cardMintKey!),
           'SolceryCard',
@@ -755,13 +752,11 @@ export const HomeView = () => {
     }
     else {
       if (wallet?.publicKey) { 
-        console.log(rulesetJson);
         var ruleset = rulesetJson.RulesetData;
         // var ruleset = JSON.parse(rulesetJson);
         var instructions: TransactionInstruction[] = []
         var accounts: Account[] = [];
         var boardAccount = new Account()
-        console.log(ruleset);
         const rulesetPointerPublicKey = new PublicKey('3LYm9BBugVhBaUogZMqg26RXrNKX6acdWTfkk8pH4GeM');
         const rulesetAccountKey = new PublicKey('Bq9M7CC8PZ3GRL2Lxx11Lp68jML9CxbuYu5BJXAkh11E')
 
@@ -818,29 +813,7 @@ export const HomeView = () => {
         
         return await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
           return await addCardsToBoard(boardAccount.publicKey, keys, ruleset.CardMintAddresses).then( async () => {
-            if (wallet?.publicKey) { 
-              const joinBoardIx = new TransactionInstruction({
-                keys: [
-                  { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-                  { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
-                  { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
-                  { pubkey: fightLogAccountPublicKey, isSigner: false, isWritable: true },
-                ],
-                programId,
-                data: Buffer.from([4]), // instruction = joinBoard
-              });
-              return sendTransaction(connection, wallet, [joinBoardIx], []).then( async () => {
-                notify({
-                  message: "Board started",
-                  description: "Started board " + boardAccount.publicKey,
-                });
-                var cookies = new Cookies();
-                cookies.set('boardAccountKey', boardAccount.publicKey.toBase58());
-                await updateBoard();
-                await updateLog();
-                connection.onAccountChange(fightLogAccountPublicKey, updateLog)
-              })
-            }
+            joinBoard(boardAccount.publicKey)
             return boardAccount.publicKey
           })
         })
@@ -866,9 +839,30 @@ export const HomeView = () => {
           'SolceryFightLog',
           programId,
         );
+
+        var playerAccountKey = await PublicKey.createWithSeed(
+          wallet.publicKey,
+          'SolceryAccountState6',
+          programId,
+        );
+        var playerAccountData = await connection.getAccountInfo(playerAccountKey)
+        if (!playerAccountData) {
+          var createPlayerAccountIx = SystemProgram.createAccountWithSeed({
+            fromPubkey: wallet.publicKey,
+            basePubkey: wallet.publicKey,
+            seed: 'SolceryAccountState6',
+            newAccountPubkey: playerAccountKey,
+            lamports: await connection.getMinimumBalanceForRentExemption(33, 'singleGossip'),
+            space: 33,
+            programId: programId,
+          });
+          instructions.push(createPlayerAccountIx)
+        }
+
         const joinBoardIx = new TransactionInstruction({
           keys: [
             { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+            { pubkey: playerAccountKey, isSigner: false, isWritable: true },
             { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
             { pubkey: boardAccountPublicKey, isSigner: false, isWritable: true },
             { pubkey: fightLogAccountPublicKey, isSigner: false, isWritable: true },
@@ -883,10 +877,10 @@ export const HomeView = () => {
             description: "Started board " + boardAccountPublicKey,
           });
           var cookies = new Cookies();
-          cookies.set('boardAccountKey', boardAccountPublicKey.toBase58());
           updateBoard();
+          connection.onAccountChange(boardAccountPublicKey, updateBoard)
           updateLog();
-          connection.onAccountChange(boardAccountPublicKey, updateLog)
+          connection.onAccountChange(fightLogAccountPublicKey, updateLog)
         },
         () => notify({
           message: "Board join failed",
@@ -924,6 +918,7 @@ export const HomeView = () => {
 
   unityContext.on("OnUnityLoaded", async () => {
     updateBoard();
+    updateLog();
     var data = { IsConnected: connected };
     unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
   });
@@ -939,14 +934,22 @@ export const HomeView = () => {
     }
     else {
       if (wallet?.publicKey) {
-        const cookies = new Cookies();
-        var boardAccountStringKey = cookies.get('boardAccountKey');
-        //if actionType = 1, actionData = 1 - clearCookie
-        if (boardAccountStringKey) {
-          var boardAccountPubkey = new PublicKey(boardAccountStringKey);
+        var playerAccountKey = await PublicKey.createWithSeed(
+          wallet.publicKey,
+          'SolceryAccountState6',
+          programId,
+        );
+        var accInfo = await connection.getAccountInfo(playerAccountKey);
+        if (accInfo?.data) {
+          var boardAccountPubkey = new PublicKey(accInfo.data.slice(1));
           const fightLogAccountKey = await PublicKey.createWithSeed(
             boardAccountPubkey,
             'SolceryFightLog',
+            programId,
+          );
+          const playerAccountKey = await PublicKey.createWithSeed(
+            wallet.publicKey,
+            'SolceryAccountState6',
             programId,
           );
           var sbuf = new SolanaBuffer(Buffer.allocUnsafe(5 + log.Steps.length * 12));
@@ -961,7 +964,8 @@ export const HomeView = () => {
           const castIx = new TransactionInstruction({
             keys: [
               { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-              { pubkey: boardAccountPubkey, isSigner: false, isWritable: true },
+              { pubkey: playerAccountKey, isSigner: false, isWritable: true },
+              { pubkey: boardAccountPubkey, isSigner: false, isWritable: false },
               { pubkey: fightLogAccountKey, isSigner: false, isWritable: true },
             ],
             programId,
@@ -983,10 +987,7 @@ export const HomeView = () => {
     }    
   }
   unityContext.on("LogAction", (actionJson) => {
-    console.log('logAction')
-    console.log(actionJson)
     var action = JSON.parse(actionJson)
-    console.log(action)
     logAction(action)
   });
 
@@ -998,8 +999,6 @@ export const HomeView = () => {
       var instructionBuffer = new SolanaBuffer(Buffer.allocUnsafe(5))
       instructionBuffer.write8(0)
       instructionBuffer.writeu32(data.pos)
-      console.log('setEntityData')
-      console.log(instructionBuffer.buf)
       if (rest.length <= MAX_DATA_SIZE) {
         const setDataAccountDataIx = new TransactionInstruction({
           keys: [
