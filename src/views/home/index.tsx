@@ -544,7 +544,7 @@ export const HomeView = () => {
     if (wallet?.publicKey) {
       var playerAccountKey = await PublicKey.createWithSeed(
         wallet.publicKey,
-        'SolceryAccountState6',
+        'SolceryAccountState8',
         programId,
       );
       var accInfo = await connection.getAccountInfo(playerAccountKey);
@@ -583,7 +583,7 @@ export const HomeView = () => {
     if (wallet?.publicKey) {
       var playerAccountKey = await PublicKey.createWithSeed(
         wallet.publicKey,
-        'SolceryAccountState6',
+        'SolceryAccountState8',
         programId,
       );
       var accInfo = await connection.getAccountInfo(playerAccountKey);
@@ -741,6 +741,7 @@ export const HomeView = () => {
         var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
         var lobbyStateData = lobbyStateAccountInfo?.data
         if (lobbyStateData) {
+          // console.log(lobbyStateData)
           if (lobbyStateData.readUInt32LE(0) == 0) { // no people in queue, creating new fight
             createBoard()
           } else {
@@ -848,7 +849,7 @@ export const HomeView = () => {
 
         var playerAccountKey = await PublicKey.createWithSeed(
           wallet.publicKey,
-          'SolceryAccountState6',
+          'SolceryAccountState8',
           programId,
         );
         var playerAccountData = await connection.getAccountInfo(playerAccountKey)
@@ -856,7 +857,7 @@ export const HomeView = () => {
           var createPlayerAccountIx = SystemProgram.createAccountWithSeed({
             fromPubkey: wallet.publicKey,
             basePubkey: wallet.publicKey,
-            seed: 'SolceryAccountState6',
+            seed: 'SolceryAccountState8',
             newAccountPubkey: playerAccountKey,
             lamports: await connection.getMinimumBalanceForRentExemption(33, 'singleGossip'),
             space: 33,
@@ -877,7 +878,7 @@ export const HomeView = () => {
           data: Buffer.from([4]), // instruction = joinBoard
         });
         instructions.push(joinBoardIx);
-        sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+        await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
           notify({
             message: "Board started",
             description: "Started board " + boardAccountPublicKey,
@@ -942,7 +943,7 @@ export const HomeView = () => {
       if (wallet?.publicKey) {
         var playerAccountKey = await PublicKey.createWithSeed(
           wallet.publicKey,
-          'SolceryAccountState6',
+          'SolceryAccountState8',
           programId,
         );
         var accInfo = await connection.getAccountInfo(playerAccountKey);
@@ -955,7 +956,7 @@ export const HomeView = () => {
           );
           const playerAccountKey = await PublicKey.createWithSeed(
             wallet.publicKey,
-            'SolceryAccountState6',
+            'SolceryAccountState8',
             programId,
           );
           var sbuf = new SolanaBuffer(Buffer.allocUnsafe(5 + log.Steps.length * 12));
