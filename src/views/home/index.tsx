@@ -155,8 +155,8 @@ class SolanaBuffer {
 export const HomeView = () => {
 
   onWalletConnectedCallback = async () => {
-    updateBoard(true)
-    updateLog(true)
+    await updateBoard(true)
+    await updateLog(true)
     return true
   }
 
@@ -877,15 +877,15 @@ export const HomeView = () => {
           data: Buffer.from([4]), // instruction = joinBoard
         });
         instructions.push(joinBoardIx);
-        sendTransaction(connection, wallet, instructions, accounts).then(() => {
+        sendTransaction(connection, wallet, instructions, accounts).then( async () => {
           notify({
             message: "Board started",
             description: "Started board " + boardAccountPublicKey,
           });
           var cookies = new Cookies();
-          updateBoard();
+          await updateBoard();
           connection.onAccountChange(boardAccountPublicKey, () => { updateBoard() })
-          updateLog();
+          await updateLog();
           connection.onAccountChange(fightLogAccountPublicKey, () => { updateLog() })
         },
         () => notify({
@@ -923,10 +923,10 @@ export const HomeView = () => {
   });
 
   unityContext.on("OnUnityLoaded", async () => {
-    updateBoard();
-    updateLog();
     var data = { IsConnected: connected };
     unityContext.send("ReactToUnity", "SetWalletConnected", JSON.stringify(data));
+    await updateBoard();
+    await updateLog();
   });
 
   unityContext.on("OpenLinkInNewTab", (link: string) => {
