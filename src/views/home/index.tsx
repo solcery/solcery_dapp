@@ -573,7 +573,9 @@ export const HomeView = () => {
           var fightLog = {
             Steps: steps
           }
-          unityContext.send("ReactToUnity", "UpdateLog", JSON.stringify(fightLog));  
+          if (fightLog.Steps.length > 2) {
+            unityContext.send("ReactToUnity", "UpdateLog", JSON.stringify(fightLog));  
+          }
         }
       }
     }
