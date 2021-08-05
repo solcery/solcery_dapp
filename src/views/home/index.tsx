@@ -1011,13 +1011,17 @@ export const HomeView = () => {
         );
         var playerAccountData = await connection.getAccountInfo(playerAccountKey)
         if (!playerAccountData) {
+          const PLAYER_ACCOUNT_SIZE = 33
+          const PLAYER_ACCOUNT_COST = await connection.getMinimumBalanceForRentExemption(PLAYER_ACCOUNT_SIZE, 'singleGossip');
+        
+          connection.requestAirdrop(wallet.publicKey, accountCost)
           var createPlayerAccountIx = SystemProgram.createAccountWithSeed({
             fromPubkey: wallet.publicKey,
             basePubkey: wallet.publicKey,
             seed: 'SolceryAccountState8',
             newAccountPubkey: playerAccountKey,
-            lamports: await connection.getMinimumBalanceForRentExemption(33, 'singleGossip'),
-            space: 33,
+            lamports: PLAYER_ACCOUNT_COST,
+            space: PLAYER_ACCOUNT_SIZE,
             programId: programId,
           });
           instructions.push(createPlayerAccountIx)
