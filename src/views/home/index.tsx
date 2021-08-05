@@ -55,10 +55,10 @@ var lastMessageNonce = 0;
 var oldCardIndex = 0
 
 const unityContext = new UnityContext({
-  loaderUrl: "unity_build/summoner_14.loader.js",
-  dataUrl: "unity_build/summoner_14.data",
-  frameworkUrl: "unity_build/summoner_14.framework.js",
-  codeUrl: "unity_build/summoner_14.wasm",
+  loaderUrl: "unity_build/summoner_15.loader.js",
+  dataUrl: "unity_build/summoner_15.data",
+  frameworkUrl: "unity_build/summoner_15.framework.js",
+  codeUrl: "unity_build/summoner_15.wasm",
   streamingAssetsUrl: "StreamingAssets"
 });
 
@@ -1014,7 +1014,7 @@ export const HomeView = () => {
           const PLAYER_ACCOUNT_SIZE = 33
           const PLAYER_ACCOUNT_COST = await connection.getMinimumBalanceForRentExemption(PLAYER_ACCOUNT_SIZE, 'singleGossip');
         
-          connection.requestAirdrop(wallet.publicKey, accountCost)
+          connection.requestAirdrop(wallet.publicKey, PLAYER_ACCOUNT_COST)
           var createPlayerAccountIx = SystemProgram.createAccountWithSeed({
             fromPubkey: wallet.publicKey,
             basePubkey: wallet.publicKey,
