@@ -11,7 +11,7 @@ import { WRAPPED_SOL_MINT } from "../../utils/ids";
 import { formatUSD } from "../../utils/utils";
 import { notify } from "../../utils/notifications";
 import { useWallet, WalletAdapter } from "../../contexts/wallet";
-import { Account, Connection, Transaction, TransactionInstruction, TransactionCtorFields, PublicKey, sendAndConfirmTransaction } from "@solana/web3.js";
+import { Account, Connection, Transaction, TransactionInstruction, TransactionCtorFields, PublicKey, sendAndConfirmTransaction, LAMPORTS_PER_SOL } from "@solana/web3.js";
 import { createUninitializedMint, createTokenAccount } from "../../actions/account"
 import Unity, { UnityContext } from "react-unity-webgl";
 import { AccountLayout, MintLayout, Token, TOKEN_PROGRAM_ID } from "@solana/spl-token";
@@ -155,8 +155,22 @@ class SolanaBuffer {
 export const HomeView = () => {
 
   onWalletConnectedCallback = async () => {
+    // var acc = await createEmptyAccount(32000)
+    // if (acc)
+    //   console.log(acc.toBase58())
     await updateBoard(true)
     await updateLog(true)
+    // await logAction({
+    //   Steps: [{
+    //     playerId: 1,
+    //     actionType: 1,
+    //     data: 1,
+    //   }]
+    // })
+    // var x = await compileBoard()
+    // console.log('board created')
+    // if (x)
+    //   console.log(x.toBase58())
     return true
   }
 
@@ -688,6 +702,24 @@ export const HomeView = () => {
     }
   }
 
+  const createEmptyAccount = async (accountSize: number) => {
+    if (wallet?.publicKey) {
+      var accountCost = await connection.getMinimumBalanceForRentExemption(accountSize, 'singleGossip')
+      var newAccount = new Account()
+      connection.requestAirdrop(wallet.publicKey, accountCost)
+      var createAccountIx = SystemProgram.createAccount({
+        programId: programId,
+        space: accountSize, // TODO
+        lamports: accountCost,
+        fromPubkey: wallet.publicKey,
+        newAccountPubkey: newAccount.publicKey,
+      });
+      return await sendTransaction(connection, wallet, [createAccountIx], [newAccount]).then( async () => {
+        return newAccount.publicKey
+      })
+    }
+  }
+
  
   const getPointerData = async (pointerAccountPublicKey: PublicKey) => {
     var pointerAccountData = await connection.getAccountInfo(pointerAccountPublicKey)
@@ -734,28 +766,58 @@ export const HomeView = () => {
     }
   }
 
+  function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   const findMatch = async () => {
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
     else {
       if (wallet?.publicKey) { 
+
         var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
         var lobbyStateData = lobbyStateAccountInfo?.data
         if (lobbyStateData) {
-          // console.log(lobbyStateData)
-          if (lobbyStateData.readUInt32LE(0) == 0) { // no people in queue, creating new fight
-            createBoard()
-          } else {
-            var boardAccountKey = new PublicKey(lobbyStateData.slice(4, 36)) //
-            joinBoard(boardAccountKey)
-          }
+          console.log(lobbyStateData)
         }
+        
+        var boardAccountKey = await createBoard()
+        var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
+        var lobbyStateData = lobbyStateAccountInfo?.data
+        if (lobbyStateData) {
+          console.log(lobbyStateData)
+        }
+        if (boardAccountKey) {
+          await sleep(5000);
+          await joinBoard(boardAccountKey, true);
+
+        }
+
+        // var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
+        // var lobbyStateData = lobbyStateAccountInfo?.data
+        // if (lobbyStateData) {
+        //   console.log(lobbyStateData)
+        //   if (lobbyStateData.readUInt32LE(0) == 0) { // no people in queue, creating new fight
+        //     var boardAccountKey = await createBoard()
+        //     if (boardAccountKey) {
+        //       await sleep(5000);
+        //       await joinBoard(boardAccountKey, true);
+        //     }
+        //   } else {
+
+        //     var boardAccountPubkey = new PublicKey(lobbyStateData.slice(4, 36)) //
+        //     await joinBoard(boardAccountPubkey)
+        //     await sleep(5000);
+        //     await joinBoard(boardAccountPubkey, true);
+        //   }
+        // }
       }
     }
   }
 
-  const createBoard = async () => {
+  const compileBoard = async () => {
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
@@ -779,31 +841,11 @@ export const HomeView = () => {
         accounts.push(boardAccount)
         instructions.push(createBoardAccountIx)
 
-        const fightLogAccountPublicKey = await PublicKey.createWithSeed(
-          boardAccount.publicKey,
-          'SolceryFightLog',
-          programId,
-        );
-        var createFightLogAccountIx = SystemProgram.createAccountWithSeed({
-          fromPubkey: wallet.publicKey,
-          basePubkey: boardAccount.publicKey,
-          seed: 'SolceryFightLog',
-          newAccountPubkey: fightLogAccountPublicKey,
-          lamports: await connection.getMinimumBalanceForRentExemption(32000, 'singleGossip'),
-          space: 32000,
-          programId: programId,
-        });
-        instructions.push(createFightLogAccountIx)
-
-        var randomSeed = Math.floor(Math.random() * 400000)
-        var buf = Buffer.allocUnsafe(5)
+        var buf = Buffer.allocUnsafe(1)
         buf.writeUInt8(2, 0)
-        buf.writeUInt32LE(randomSeed, 1)
         var keys = [
           { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
-          { pubkey: statAccountKey, isSigner: false, isWritable: true },
           { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
-          { pubkey: fightLogAccountPublicKey, isSigner: false, isWritable: true },
           { pubkey: rulesetPointerPublicKey, isSigner: false, isWritable: false },
           { pubkey: rulesetAccountKey, isSigner: false, isWritable: false },
         ]
@@ -822,9 +864,119 @@ export const HomeView = () => {
         
         return await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
           return await addCardsToBoard(boardAccount.publicKey, keys, ruleset.CardMintAddresses).then( async () => {
-            joinBoard(boardAccount.publicKey)
             return boardAccount.publicKey
           })
+        })
+      }
+    }
+  }
+
+  const createBoard = async (andJoin: boolean = false) => {
+    if (wallet === undefined) {
+      console.log('wallet undefined')
+    }
+    else {
+      if (wallet?.publicKey) { 
+        var ruleset = rulesetJson.RulesetData;
+        // var ruleset = JSON.parse(rulesetJson);
+        var instructions: TransactionInstruction[] = []
+        var accounts: Account[] = [];
+        var boardAccount = new Account()
+
+        const BOARD_SIZE = 50000
+        const BOARD_COST = await connection.getMinimumBalanceForRentExemption(BOARD_SIZE, 'singleGossip') / 12;
+        const LOG_SIZE = 32000
+        const LOG_COST = await connection.getMinimumBalanceForRentExemption(LOG_SIZE, 'singleGossip') / 12;
+        const PLAYER_ACCOUNT_SIZE = 33
+        const PLAYER_ACCOUNT_COST = await connection.getMinimumBalanceForRentExemption(PLAYER_ACCOUNT_SIZE, 'singleGossip');
+        
+        
+        connection.requestAirdrop(wallet.publicKey, BOARD_COST + LOG_COST + PLAYER_ACCOUNT_COST)
+
+
+        var createBoardAccountIx = SystemProgram.createAccount({
+          programId: programId,
+          space: BOARD_SIZE, // TODO
+          lamports: BOARD_COST,
+          fromPubkey: wallet.publicKey,
+          newAccountPubkey: boardAccount.publicKey,
+        });
+        accounts.push(boardAccount)
+        instructions.push(createBoardAccountIx)
+
+        const fightLogAccountPublicKey = await PublicKey.createWithSeed(
+          boardAccount.publicKey,
+          'SolceryFightLog',
+          programId,
+        );
+        var createFightLogAccountIx = SystemProgram.createAccountWithSeed({
+          fromPubkey: wallet.publicKey,
+          basePubkey: boardAccount.publicKey,
+          seed: 'SolceryFightLog',
+          newAccountPubkey: fightLogAccountPublicKey,
+          lamports: LOG_COST,
+          space: LOG_SIZE,
+          programId: programId,
+        });
+        instructions.push(createFightLogAccountIx)
+
+        var buf = Buffer.allocUnsafe(7)
+        buf.writeUInt8(6, 0)
+        buf.writeUInt8(1, 1)
+        buf.writeUInt8(1, 2)
+        buf.writeUInt32LE(Math.floor(Math.random() * 400000), 3)
+        var keys = [
+          { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+          { pubkey: boardSrcAccountKey, isSigner: false, isWritable: false },
+          { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
+          { pubkey: statAccountKey, isSigner: false, isWritable: true },
+          { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
+        ]
+        const createBoardIx = new TransactionInstruction({
+          keys: keys,
+          programId,
+          data: buf,
+        });
+        instructions.push(createBoardIx);
+
+        var playerAccountKey = await PublicKey.createWithSeed(
+          wallet.publicKey,
+          'SolceryAccountState8',
+          programId,
+        );
+        var playerAccountData = await connection.getAccountInfo(playerAccountKey)
+        if (!playerAccountData) {
+          var createPlayerAccountIx = SystemProgram.createAccountWithSeed({
+            fromPubkey: wallet.publicKey,
+            basePubkey: wallet.publicKey,
+            seed: 'SolceryAccountState8',
+            newAccountPubkey: playerAccountKey,
+            lamports: PLAYER_ACCOUNT_COST,
+            space: PLAYER_ACCOUNT_SIZE,
+            programId: programId,
+          });
+          instructions.push(createPlayerAccountIx)
+        }
+
+        var buf = Buffer.allocUnsafe(3)
+        buf.writeUInt8(4, 0) // instruction = joinBoard
+        buf.writeUInt8(1, 1) // remove from lobby
+        buf.writeUInt8(0, 2) // bot = false       
+        const joinBoardIx = new TransactionInstruction({
+          keys: [
+            { pubkey: wallet.publicKey, isSigner: false, isWritable: false },
+            { pubkey: playerAccountKey, isSigner: false, isWritable: true },
+            { pubkey: boardAccount.publicKey, isSigner: false, isWritable: true },
+            { pubkey: fightLogAccountPublicKey, isSigner: false, isWritable: true },
+            { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
+          ],
+          programId,
+          data: buf, 
+        });
+        instructions.push(joinBoardIx);
+
+        return await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+          return boardAccount.publicKey
         })
       }
     }
@@ -833,7 +985,7 @@ export const HomeView = () => {
     findMatch()
   });
 
-  const joinBoard = async (boardAccountPublicKey: PublicKey) => {
+  const joinBoard = async (boardAccountPublicKey: PublicKey, addBot: boolean = false) => {
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
@@ -868,16 +1020,20 @@ export const HomeView = () => {
           instructions.push(createPlayerAccountIx)
         }
 
+        var buf = Buffer.allocUnsafe(7)
+        buf.writeUInt8(4, 0) // instruction = joinBoard
+        buf.writeUInt8(0, 1) // remove from lobby
+        buf.writeUInt8(addBot ? 1 : 0, 2) // bot = false       
         const joinBoardIx = new TransactionInstruction({
           keys: [
-            { pubkey: wallet.publicKey, isSigner: true, isWritable: false },
+            { pubkey: wallet.publicKey, isSigner: false, isWritable: false },
             { pubkey: playerAccountKey, isSigner: false, isWritable: true },
-            { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
             { pubkey: boardAccountPublicKey, isSigner: false, isWritable: true },
             { pubkey: fightLogAccountPublicKey, isSigner: false, isWritable: true },
+            // { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
           ],
           programId,
-          data: Buffer.from([4]), // instruction = joinBoard
+          data: buf, 
         });
         instructions.push(joinBoardIx);
         await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
@@ -886,10 +1042,8 @@ export const HomeView = () => {
             description: "Started board " + boardAccountPublicKey,
           });
           var cookies = new Cookies();
-          await updateBoard();
-          connection.onAccountChange(boardAccountPublicKey, () => { updateBoard() })
-          await updateLog();
-          connection.onAccountChange(fightLogAccountPublicKey, () => { updateLog() })
+          await updateBoard(true);
+          await updateLog(true);
         },
         () => notify({
           message: "Board join failed",
@@ -918,8 +1072,9 @@ export const HomeView = () => {
 
 
   var programId = new PublicKey("4YyCGiiZ3EorWmcQs3yrCRfTGt8udhDvV9ffJoWJaXUX");
-  var lobbyAccountKey = new PublicKey("8t4XsAbA75xAq8LKdM97WFT1XyPxG3fPY1UNA4um6ywm"); // devnet
-  var statAccountKey = new PublicKey("f7thdQfV9pcQMkVo9EjABraws75SFWrbUVrva1v1tbW"); //devnet
+  var lobbyAccountKey = new PublicKey("6XZZeUgQ7KrRUvWnHkbmqUm6Uo4J9Wsc2iTsXhaeUB4s"); // devnet
+  var statAccountKey = new PublicKey("63PV157ZtWEbFDXNUci5BEfPJcazrkua1EMZxGiqRtiT"); //devnet
+  var boardSrcAccountKey = new PublicKey("HkULDWN34nQRwMGZ5oRminYfxC6W3mN5V57jCQZrh8To") // devnet
 
   unityContext.on("LogToConsole", (message) => {
     console.log(message);
