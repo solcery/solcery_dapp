@@ -163,12 +163,12 @@ export const HomeView = () => {
     //   }]
     // })
 
-     var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
-        var lobbyStateData = lobbyStateAccountInfo?.data
-        if (lobbyStateData) {
-          console.log(lobbyStateData)
+     // var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
+     //    var lobbyStateData = lobbyStateAccountInfo?.data
+     //    if (lobbyStateData) {
+     //      console.log(lobbyStateData)
 
-        }
+     //    }
 
     // var acc = await createEmptyAccount(32000)
     // if (acc)
