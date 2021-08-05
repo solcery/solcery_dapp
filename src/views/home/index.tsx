@@ -1031,7 +1031,7 @@ export const HomeView = () => {
             { pubkey: playerAccountKey, isSigner: false, isWritable: true },
             { pubkey: boardAccountPublicKey, isSigner: false, isWritable: true },
             { pubkey: fightLogAccountPublicKey, isSigner: false, isWritable: true },
-            // { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
+            { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
           ],
           programId,
           data: buf, 
