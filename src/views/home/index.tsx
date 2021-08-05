@@ -977,6 +977,8 @@ export const HomeView = () => {
         instructions.push(joinBoardIx);
 
         return await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+          await updateBoard(true);
+          await updateLog(true);
           return boardAccount.publicKey
         })
       }
