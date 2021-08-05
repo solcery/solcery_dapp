@@ -961,7 +961,7 @@ export const HomeView = () => {
 
         var buf = Buffer.allocUnsafe(3)
         buf.writeUInt8(4, 0) // instruction = joinBoard
-        buf.writeUInt8(1, 1) // remove from lobby
+        buf.writeUInt8(0, 1) // remove from lobby
         buf.writeUInt8(0, 2) // bot = false       
         const joinBoardIx = new TransactionInstruction({
           keys: [
