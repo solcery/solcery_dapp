@@ -801,16 +801,9 @@ export const HomeView = () => {
           console.log(lobbyStateData)
           if (lobbyStateData.readUInt32LE(0) == 0) { // no people in queue, creating new fight
             var boardAccountKey = await createBoard()
-            if (boardAccountKey) {
-              await sleep(5000);
-              await joinBoard(boardAccountKey, true);
-            }
           } else {
-
             var boardAccountPubkey = new PublicKey(lobbyStateData.slice(4, 36)) //
             await joinBoard(boardAccountPubkey)
-            await sleep(5000);
-            await joinBoard(boardAccountPubkey, true);
           }
         }
       }
