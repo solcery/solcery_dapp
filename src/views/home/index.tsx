@@ -155,11 +155,6 @@ class SolanaBuffer {
 export const HomeView = () => {
 
   onWalletConnectedCallback = async () => {
-    // var acc = await createEmptyAccount(32000)
-    // if (acc)
-    //   console.log(acc.toBase58())
-    await updateBoard(true)
-    await updateLog(true)
     // await logAction({
     //   Steps: [{
     //     playerId: 1,
@@ -167,6 +162,19 @@ export const HomeView = () => {
     //     data: 1,
     //   }]
     // })
+
+     var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
+        var lobbyStateData = lobbyStateAccountInfo?.data
+        if (lobbyStateData) {
+          console.log(lobbyStateData)
+
+        }
+
+    // var acc = await createEmptyAccount(32000)
+    // if (acc)
+    //   console.log(acc.toBase58())
+    await updateBoard(true)
+    await updateLog(true)
     // var x = await compileBoard()
     // console.log('board created')
     // if (x)
@@ -803,7 +811,7 @@ export const HomeView = () => {
             var boardAccountKey = await createBoard()
           } else {
             var boardAccountPubkey = new PublicKey(lobbyStateData.slice(4, 36)) //
-            await joinBoard(boardAccountPubkey)
+            await joinBoard(boardAccountPubkey, false, true)
           }
         }
       }
@@ -978,7 +986,7 @@ export const HomeView = () => {
     findMatch()
   });
 
-  const joinBoard = async (boardAccountPublicKey: PublicKey, addBot: boolean = false) => {
+  const joinBoard = async (boardAccountPublicKey: PublicKey, addBot: boolean = false, removeFromLobby = true) => {
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
@@ -1013,9 +1021,9 @@ export const HomeView = () => {
           instructions.push(createPlayerAccountIx)
         }
 
-        var buf = Buffer.allocUnsafe(7)
+        var buf = Buffer.allocUnsafe(3)
         buf.writeUInt8(4, 0) // instruction = joinBoard
-        buf.writeUInt8(0, 1) // remove from lobby
+        buf.writeUInt8(removeFromLobby ? 1 : 0, 1) // remove from lobby
         buf.writeUInt8(addBot ? 1 : 0, 2) // bot = false       
         const joinBoardIx = new TransactionInstruction({
           keys: [
