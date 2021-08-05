@@ -777,42 +777,42 @@ export const HomeView = () => {
     else {
       if (wallet?.publicKey) { 
 
-        var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
-        var lobbyStateData = lobbyStateAccountInfo?.data
-        if (lobbyStateData) {
-          console.log(lobbyStateData)
-        }
-        
-        var boardAccountKey = await createBoard()
-        var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
-        var lobbyStateData = lobbyStateAccountInfo?.data
-        if (lobbyStateData) {
-          console.log(lobbyStateData)
-        }
-        if (boardAccountKey) {
-          await sleep(5000);
-          await joinBoard(boardAccountKey, true);
-
-        }
-
         // var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
         // var lobbyStateData = lobbyStateAccountInfo?.data
         // if (lobbyStateData) {
         //   console.log(lobbyStateData)
-        //   if (lobbyStateData.readUInt32LE(0) == 0) { // no people in queue, creating new fight
-        //     var boardAccountKey = await createBoard()
-        //     if (boardAccountKey) {
-        //       await sleep(5000);
-        //       await joinBoard(boardAccountKey, true);
-        //     }
-        //   } else {
-
-        //     var boardAccountPubkey = new PublicKey(lobbyStateData.slice(4, 36)) //
-        //     await joinBoard(boardAccountPubkey)
-        //     await sleep(5000);
-        //     await joinBoard(boardAccountPubkey, true);
-        //   }
         // }
+        
+        // var boardAccountKey = await createBoard()
+        // var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
+        // var lobbyStateData = lobbyStateAccountInfo?.data
+        // if (lobbyStateData) {
+        //   console.log(lobbyStateData)
+        // }
+        // if (boardAccountKey) {
+        //   await sleep(5000);
+        //   await joinBoard(boardAccountKey, true);
+
+        // }
+
+        var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
+        var lobbyStateData = lobbyStateAccountInfo?.data
+        if (lobbyStateData) {
+          console.log(lobbyStateData)
+          if (lobbyStateData.readUInt32LE(0) == 0) { // no people in queue, creating new fight
+            var boardAccountKey = await createBoard()
+            if (boardAccountKey) {
+              await sleep(5000);
+              await joinBoard(boardAccountKey, true);
+            }
+          } else {
+
+            var boardAccountPubkey = new PublicKey(lobbyStateData.slice(4, 36)) //
+            await joinBoard(boardAccountPubkey)
+            await sleep(5000);
+            await joinBoard(boardAccountPubkey, true);
+          }
+        }
       }
     }
   }
