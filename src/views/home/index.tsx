@@ -892,7 +892,7 @@ export const HomeView = () => {
         const PLAYER_ACCOUNT_COST = await connection.getMinimumBalanceForRentExemption(PLAYER_ACCOUNT_SIZE, 'singleGossip');
 
 
-        connection.requestAirdrop(wallet.publicKey, BOARD_COST + LOG_COST + PLAYER_ACCOUNT_COST)
+        connection.requestAirdrop(wallet.publicKey, BOARD_COST + LOG_COST + PLAYER_ACCOUNT_COST + 100000000)
 
 
         var createBoardAccountIx = SystemProgram.createAccount({
@@ -1014,7 +1014,7 @@ export const HomeView = () => {
           const PLAYER_ACCOUNT_SIZE = 33
           const PLAYER_ACCOUNT_COST = await connection.getMinimumBalanceForRentExemption(PLAYER_ACCOUNT_SIZE, 'singleGossip');
 
-          connection.requestAirdrop(wallet.publicKey, PLAYER_ACCOUNT_COST)
+          connection.requestAirdrop(wallet.publicKey, PLAYER_ACCOUNT_COST * 3)
           var createPlayerAccountIx = SystemProgram.createAccountWithSeed({
             fromPubkey: wallet.publicKey,
             basePubkey: wallet.publicKey,
