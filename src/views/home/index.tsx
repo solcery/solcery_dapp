@@ -1,5 +1,5 @@
 import { Button, Col, Row } from "antd";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ConnectButton } from "../../components/ConnectButton";
 import { TokenIcon } from "../../components/TokenIcon";
@@ -44,7 +44,7 @@ export async function onWalletConnected() {
 
 const joinedBufferToBuffer = function (joinedBuffer: string) {
   var strBytesArray = joinedBuffer.split('|');
-  var buf = Buffer.allocUnsafe(strBytesArray.length );
+  var buf = Buffer.allocUnsafe(strBytesArray.length);
   for (var i = 0; i < strBytesArray.length; i++) {
     buf.writeUInt8(parseInt(strBytesArray[i]), i);
   }
@@ -74,7 +74,7 @@ class SolanaBuffer {
     this.pos += 1;
     return this.buf.readUInt8(this.pos - 1);
   }
-  write8(number: number ) {
+  write8(number: number) {
     this.buf.writeUInt8(number, this.pos);
     this.pos += 1;
   }
@@ -83,7 +83,7 @@ class SolanaBuffer {
     this.pos += 1;
     return this.buf.readUInt8(this.pos - 1) == 1 ? true : false;
   }
-  writeBool(value: boolean ) {
+  writeBool(value: boolean) {
     this.buf.writeUInt8(value ? 1 : 0, this.pos);
     this.pos += 1;
   }
@@ -163,12 +163,12 @@ export const HomeView = () => {
     //   }]
     // })
 
-     // var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
-     //    var lobbyStateData = lobbyStateAccountInfo?.data
-     //    if (lobbyStateData) {
-     //      console.log(lobbyStateData)
+    // var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
+    //    var lobbyStateData = lobbyStateAccountInfo?.data
+    //    if (lobbyStateData) {
+    //      console.log(lobbyStateData)
 
-     //    }
+    //    }
 
     // var acc = await createEmptyAccount(32000)
     // if (acc)
@@ -198,7 +198,7 @@ export const HomeView = () => {
     Description: string,
   }
 
-  type Card =  {
+  type Card = {
     MintAddress: string,
     Metadata: CardMetadata,
     BrickTree: {
@@ -307,10 +307,10 @@ export const HomeView = () => {
     let rulesetData: Ruleset = {
       CardMintAddresses: [],
       Deck: [
-      {
-        PlaceId: 0,
-        IndexAmount: [],
-      }],
+        {
+          PlaceId: 0,
+          IndexAmount: [],
+        }],
       DisplayData: {
         PlayerDisplayDatas: []
       }
@@ -371,7 +371,7 @@ export const HomeView = () => {
           Amount: sbuf.readu32(),
         })
       }
-      Deck.push({ 
+      Deck.push({
         PlaceId: placeId,
         IndexAmount: IndexAmount
       })
@@ -391,7 +391,7 @@ export const HomeView = () => {
           Y2: sbuf.readu32(),
         },
         CardFaceOption: sbuf.readu32(),
-        CardLayoutOption : sbuf.readu32(),
+        CardLayoutOption: sbuf.readu32(),
       })
     }
     return {
@@ -535,9 +535,9 @@ export const HomeView = () => {
       Description: buffer.readString(),
     }
     return {
-      Metadata: md,  
+      Metadata: md,
       BrickTree: {
-        Genesis: deserializeBrick(buffer), 
+        Genesis: deserializeBrick(buffer),
       },
     }
   }
@@ -576,7 +576,7 @@ export const HomeView = () => {
           boardAccountKey,
           'SolceryFightLog',
           programId,
-        );         
+        );
         var logInfo = await connection.getAccountInfo(fightLogAccountPublicKey);
         if (subscribe) {
           connection.onAccountChange(fightLogAccountPublicKey, () => { updateLog() })
@@ -596,7 +596,7 @@ export const HomeView = () => {
             Steps: steps
           }
           if (fightLog.Steps.length > 2) {
-            unityContext.send("ReactToUnity", "UpdateLog", JSON.stringify(fightLog));  
+            unityContext.send("ReactToUnity", "UpdateLog", JSON.stringify(fightLog));
           }
         }
       }
@@ -611,7 +611,7 @@ export const HomeView = () => {
         programId,
       );
       var accInfo = await connection.getAccountInfo(playerAccountKey);
-       if (accInfo?.data && accInfo?.data[0] != 0) {
+      if (accInfo?.data && accInfo?.data[0] != 0) {
         var boardAccountKey = new PublicKey(accInfo.data.slice(1))
         var boardInfo = await connection.getAccountInfo(boardAccountKey);
         if (boardInfo?.data) {
@@ -630,7 +630,7 @@ export const HomeView = () => {
             }
           }
           if (boardData !== undefined) {
-            unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(boardData));            
+            unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(boardData));
           }
         }
       }
@@ -657,7 +657,7 @@ export const HomeView = () => {
           Attrs: [0]
         }
         var attrs = []
-        for (let i = 0; i < 10; i ++) {
+        for (let i = 0; i < 10; i++) {
           attrs.push(buffer.readu32())
         }
         player.Attrs = attrs
@@ -722,13 +722,13 @@ export const HomeView = () => {
         fromPubkey: wallet.publicKey,
         newAccountPubkey: newAccount.publicKey,
       });
-      return await sendTransaction(connection, wallet, [createAccountIx], [newAccount]).then( async () => {
+      return await sendTransaction(connection, wallet, [createAccountIx], [newAccount]).then(async () => {
         return newAccount.publicKey
       })
     }
   }
 
- 
+
   const getPointerData = async (pointerAccountPublicKey: PublicKey) => {
     var pointerAccountData = await connection.getAccountInfo(pointerAccountPublicKey)
     var dataAccountPublicKey = pointerAccountData?.data!
@@ -742,7 +742,7 @@ export const HomeView = () => {
     isWritable: boolean,
   }
 
-  const addCardsToBoard = async(boardAccountPubkey: PublicKey, basicKeys: KeyInstruction[], cards: string[]) => {
+  const addCardsToBoard = async (boardAccountPubkey: PublicKey, basicKeys: KeyInstruction[], cards: string[]) => {
     if (wallet?.publicKey) {
       var amount = Math.min(10, cards.length)
       var keys = [...basicKeys]
@@ -766,11 +766,11 @@ export const HomeView = () => {
         programId,
         data: buf,
       });
-      await sendTransaction(connection, wallet, [addCardsToBoardIx], []).then( async () => {
+      await sendTransaction(connection, wallet, [addCardsToBoardIx], []).then(async () => {
         if (cards.length > 0) {
           await addCardsToBoard(boardAccountPubkey, basicKeys, cards)
         }
-      }); 
+      });
     }
   }
 
@@ -783,14 +783,14 @@ export const HomeView = () => {
       console.log('wallet undefined')
     }
     else {
-      if (wallet?.publicKey) { 
+      if (wallet?.publicKey) {
 
         // var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
         // var lobbyStateData = lobbyStateAccountInfo?.data
         // if (lobbyStateData) {
         //   console.log(lobbyStateData)
         // }
-        
+
         // var boardAccountKey = await createBoard()
         // var lobbyStateAccountInfo = await connection.getAccountInfo(lobbyAccountKey)
         // var lobbyStateData = lobbyStateAccountInfo?.data
@@ -823,7 +823,7 @@ export const HomeView = () => {
       console.log('wallet undefined')
     }
     else {
-      if (wallet?.publicKey) { 
+      if (wallet?.publicKey) {
         var ruleset = rulesetJson.RulesetData;
         // var ruleset = JSON.parse(rulesetJson);
         var instructions: TransactionInstruction[] = []
@@ -862,9 +862,9 @@ export const HomeView = () => {
           { pubkey: rulesetPointerPublicKey, isSigner: false, isWritable: false },
           { pubkey: rulesetAccountKey, isSigner: false, isWritable: false },
         ]
-        
-        return await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
-          return await addCardsToBoard(boardAccount.publicKey, keys, ruleset.CardMintAddresses).then( async () => {
+
+        return await sendTransaction(connection, wallet, instructions, accounts).then(async () => {
+          return await addCardsToBoard(boardAccount.publicKey, keys, ruleset.CardMintAddresses).then(async () => {
             return boardAccount.publicKey
           })
         })
@@ -877,7 +877,7 @@ export const HomeView = () => {
       console.log('wallet undefined')
     }
     else {
-      if (wallet?.publicKey) { 
+      if (wallet?.publicKey) {
         var ruleset = rulesetJson.RulesetData;
         // var ruleset = JSON.parse(rulesetJson);
         var instructions: TransactionInstruction[] = []
@@ -890,8 +890,8 @@ export const HomeView = () => {
         const LOG_COST = await connection.getMinimumBalanceForRentExemption(LOG_SIZE, 'singleGossip') / 12;
         const PLAYER_ACCOUNT_SIZE = 33
         const PLAYER_ACCOUNT_COST = await connection.getMinimumBalanceForRentExemption(PLAYER_ACCOUNT_SIZE, 'singleGossip');
-        
-        
+
+
         connection.requestAirdrop(wallet.publicKey, BOARD_COST + LOG_COST + PLAYER_ACCOUNT_COST)
 
 
@@ -972,11 +972,11 @@ export const HomeView = () => {
             { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
           ],
           programId,
-          data: buf, 
+          data: buf,
         });
         instructions.push(joinBoardIx);
 
-        return await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+        return await sendTransaction(connection, wallet, instructions, accounts).then(async () => {
           await updateBoard(true);
           await updateLog(true);
           return boardAccount.publicKey
@@ -996,7 +996,7 @@ export const HomeView = () => {
       if (wallet?.publicKey) {
         var accounts: Account[];
         accounts = []
-      
+
         var instructions = [];
         const fightLogAccountPublicKey = await PublicKey.createWithSeed(
           boardAccountPublicKey,
@@ -1013,7 +1013,7 @@ export const HomeView = () => {
         if (!playerAccountData) {
           const PLAYER_ACCOUNT_SIZE = 33
           const PLAYER_ACCOUNT_COST = await connection.getMinimumBalanceForRentExemption(PLAYER_ACCOUNT_SIZE, 'singleGossip');
-        
+
           connection.requestAirdrop(wallet.publicKey, PLAYER_ACCOUNT_COST)
           var createPlayerAccountIx = SystemProgram.createAccountWithSeed({
             fromPubkey: wallet.publicKey,
@@ -1040,10 +1040,10 @@ export const HomeView = () => {
             { pubkey: lobbyAccountKey, isSigner: false, isWritable: true },
           ],
           programId,
-          data: buf, 
+          data: buf,
         });
         instructions.push(joinBoardIx);
-        await sendTransaction(connection, wallet, instructions, accounts).then( async () => {
+        await sendTransaction(connection, wallet, instructions, accounts).then(async () => {
           notify({
             message: "Board started",
             description: "Started board " + boardAccountPublicKey,
@@ -1052,10 +1052,10 @@ export const HomeView = () => {
           await updateBoard(true);
           await updateLog(true);
         },
-        () => notify({
-          message: "Board join failed",
-          description: "Some error",
-        }));
+          () => notify({
+            message: "Board join failed",
+            description: "Some error",
+          }));
       }
     }
   };
@@ -1074,7 +1074,7 @@ export const HomeView = () => {
   var lastEntityMintAdress = '';
   var lastEntityAccount: Account[]
   var lastBoardUpdate: number;
-  
+
   const rulesetJson = require('./ruleset.json');
 
 
@@ -1099,7 +1099,7 @@ export const HomeView = () => {
   });
 
 
-  const logAction = async(log: FightLog) => {
+  const logAction = async (log: FightLog) => {
     if (wallet === undefined) {
       console.log('wallet undefined')
     }
@@ -1145,17 +1145,17 @@ export const HomeView = () => {
           sendTransaction(connection, wallet, [castIx], []).then(async () => {
             updateLog();
           },
-          () => {
-            updateLog();
-            notify({
-              message: "Cast card failed",
-              description: "reason",
-            })
-          }
+            () => {
+              updateLog();
+              notify({
+                message: "Cast card failed",
+                description: "reason",
+              })
+            }
           );
         }
       }
-    }    
+    }
   }
   unityContext.on("LogAction", (actionJson) => {
     var action = JSON.parse(actionJson)
@@ -1164,7 +1164,7 @@ export const HomeView = () => {
 
   const setEntityData = async (entityAccountPublicKey: PublicKey, data: SolanaBuffer, accounts: Account[]) => {
     const MAX_DATA_SIZE = 500
-    if (wallet?.publicKey) { 
+    if (wallet?.publicKey) {
       var accounts = [...accounts]
       var rest = data.getRest()
       var instructionBuffer = new SolanaBuffer(Buffer.allocUnsafe(5))
@@ -1177,10 +1177,10 @@ export const HomeView = () => {
             { pubkey: entityAccountPublicKey, isSigner: false, isWritable: true },
           ],
           programId,
-          data: Buffer.concat([ instructionBuffer.buf, rest]),
+          data: Buffer.concat([instructionBuffer.buf, rest]),
         });
         await sendTransaction(connection, wallet, [setDataAccountDataIx], accounts, true)
-      } 
+      }
       else {
         rest = rest.slice(0, MAX_DATA_SIZE)
         const setDataAccountDataIx = new TransactionInstruction({
@@ -1189,9 +1189,9 @@ export const HomeView = () => {
             { pubkey: entityAccountPublicKey, isSigner: false, isWritable: true },
           ],
           programId,
-          data: Buffer.concat([ instructionBuffer.buf, rest]),
+          data: Buffer.concat([instructionBuffer.buf, rest]),
         });
-        await sendTransaction(connection, wallet, [setDataAccountDataIx], accounts, true).then( async () => {
+        await sendTransaction(connection, wallet, [setDataAccountDataIx], accounts, true).then(async () => {
           data.pos += MAX_DATA_SIZE
           await setEntityData(entityAccountPublicKey, data, accounts)
         })
@@ -1213,13 +1213,26 @@ export const HomeView = () => {
     };
   }, [marketEmitter, midPriceInUSD, tokenMap]);
 
+  const [progression, setProgression] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(function () {
+    unityContext.on("progress", function (progression) {
+      setProgression(progression);
+    });
+  }, []);
+
+  useEffect(function () {
+    unityContext.on("loaded", function () {
+      setIsLoaded(true);
+    });
+  }, []);
+
   return (
 
-  <Unity tabIndex={3} style={{ width: '100%', height: '100%' }} unityContext={unityContext} />
-  //<Row>
-  //</Row>
-
+    <div style={{ width: '100%', height: '100%', display:"flex" }}>
+      <p style={{ fontSize: "30px", position: "absolute", width: "100%", alignSelf:"center", textAlign: "center", visibility: isLoaded ? "hidden" : "visible"}}>Loading {(progression * 100).toFixed(0)}%...</p>
+      <Unity tabIndex={3} style={{ visibility: isLoaded ? "visible" : "hidden", width: '100%', height: '100%' }} unityContext={unityContext} />
+    </div>
   );
- 
-  
 };
