@@ -1079,8 +1079,8 @@ export const HomeView = () => {
 
 
   var programId = new PublicKey("4YyCGiiZ3EorWmcQs3yrCRfTGt8udhDvV9ffJoWJaXUX");
-  var lobbyAccountKey = new PublicKey("6XZZeUgQ7KrRUvWnHkbmqUm6Uo4J9Wsc2iTsXhaeUB4s"); // devnet
-  var statAccountKey = new PublicKey("63PV157ZtWEbFDXNUci5BEfPJcazrkua1EMZxGiqRtiT"); //devnet
+  var lobbyAccountKey = new PublicKey("67tFu5K16v6WWLEH3DFQHmLdr7DZ3K8j4X23RGKpn6Su"); // devnet
+  var statAccountKey = new PublicKey("5cUY8X3DrfLymvZDS1i35t7ZbgP87buNkujiuVSP2phs"); //devnet
   var boardSrcAccountKey = new PublicKey("HkULDWN34nQRwMGZ5oRminYfxC6W3mN5V57jCQZrh8To") // devnet
 
   unityContext.on("LogToConsole", (message) => {
