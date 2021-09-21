@@ -596,6 +596,7 @@ export const HomeView = () => {
             Steps: steps
           }
           if (fightLog.Steps.length > 2) {
+            console.log(JSON.stringify(fightLog))
             unityContext.send("ReactToUnity", "UpdateLog", JSON.stringify(fightLog));
           }
         }
@@ -630,6 +631,7 @@ export const HomeView = () => {
             }
           }
           if (boardData !== undefined) {
+            console.log(JSON.stringify(boardData))
             unityContext.send("ReactToUnity", "UpdateBoard", JSON.stringify(boardData));
           }
         }
@@ -924,7 +926,7 @@ export const HomeView = () => {
 
         var buf = Buffer.allocUnsafe(7)
         buf.writeUInt8(6, 0)
-        buf.writeUInt8(1, 1)
+        buf.writeUInt8(0, 1)
         buf.writeUInt8(1, 2)
         buf.writeUInt32LE(Math.floor(Math.random() * 400000), 3)
         var keys = [
